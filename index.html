@@ -1,0 +1,1388 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Torque Manutenção</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: software de oficina — menu lateral grafite com faixa zebrada amarela, área clara de concreto, cartões brancos; pátio 3D e colhedora como peças centrais; modo TV em tela cheia */
+:root{
+  --bg:#E8ECEE; --panel:#FFFFFF; --panel2:#F2F4F5; --line:#D9DFE2; --fg:#12171A; --muted:#5B676E; --dim:#9AA5AB;
+  --side:#14191C; --sidefg:#C5CDD1; --sideline:#262E33;
+  --accent:#F2B705; --accentInk:#14191C;
+  --exec:#EF7A1A; --peca:#D93F3F; --prev:#2F7FD8; --lib:#1FA35B;
+  --ok:#1FA35B; --warn:#D08A00; --bad:#D93F3F;
+  --shadow:0 1px 2px rgba(18,23,26,.05),0 6px 20px rgba(18,23,26,.05);
+  --glass:rgba(255,255,255,.86);
+  --display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+html.dark{--bg:#0F1417;--panel:#172024;--panel2:#1E282D;--line:#2B363C;--fg:#E6EBED;--muted:#97A4AB;--dim:#5E6B72;--side:#0A0E10;--sideline:#1C2428;--shadow:none;--glass:rgba(23,32,36,.86);color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg);color:var(--fg)}
+body{font:14px/1.5 var(--body);margin:0}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh}
+
+/* menu lateral */
+.side{position:sticky;top:0;height:100vh;background:var(--side);color:var(--sidefg);display:flex;flex-direction:column;padding:0 0 0 env(safe-area-inset-left,0px);z-index:20}
+.stripe{height:10px;background:repeating-linear-gradient(-45deg,var(--accent) 0 10px,#14191C 10px 20px)}
+.brand{display:flex;align-items:center;gap:10px;padding:18px 18px 16px}
+.brand .lg{width:36px;height:36px;border-radius:7px;background:var(--accent);color:#14191C;display:grid;place-items:center;font:800 22px var(--display)}
+.brand b{display:block;font:800 26px/1 var(--display);letter-spacing:.08em;color:#fff}
+.brand small{font:11px var(--mono);color:#7F8C93}
+.navlbl{font:600 11px var(--display);letter-spacing:.14em;text-transform:uppercase;color:#6F7C83;padding:10px 20px 6px}
+#nav{display:flex;flex-direction:column;gap:2px;padding:0 10px}
+#nav button{display:flex;align-items:center;gap:12px;background:none;border:0;border-radius:8px;padding:9px 12px;color:var(--sidefg);cursor:pointer;text-align:left;font:500 14px var(--body);position:relative}
+#nav button svg{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#nav .ls{display:none}
+#nav button:hover{background:#1E262A;color:#fff}
+#nav button.on{background:var(--accent);color:#14191C;font-weight:600}
+#nav button .bd{margin-left:auto;font:600 11px var(--mono);background:#2A3338;color:#fff;border-radius:999px;padding:1px 7px}
+#nav button.on .bd{background:#14191C}
+.sidefoot{margin-top:auto;padding:14px 16px 18px;border-top:1px solid var(--sideline);display:flex;flex-direction:column;gap:10px}
+.sbtn{display:flex;align-items:center;justify-content:center;gap:8px;background:#1E262A;border:1px solid #2C363B;color:#fff;border-radius:8px;padding:8px;cursor:pointer;font-size:13px}
+.sbtn:hover{border-color:var(--accent)}
+.sbtn.tvb{background:var(--accent);color:#14191C;border-color:var(--accent);font:700 15px var(--display);letter-spacing:.08em}
+.credit{font-size:11px;color:#6F7C83}
+
+/* principal */
+.main{min-width:0;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px));padding-block:0 32px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:15;background:var(--bg);display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:14px 0 12px;border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--bg)}
+.top .tl{margin-right:auto;min-width:0}
+.top h1{font:700 30px/1 var(--display);letter-spacing:.02em;margin:0;text-wrap:balance}
+.top p{margin:3px 0 0;color:var(--muted);font-size:13px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 11px;font:12px var(--mono);white-space:nowrap;color:var(--muted)}
+.chip b{color:var(--fg);font-weight:600}
+.chip.safe{background:var(--accent);border-color:var(--accent);color:#14191C}
+.chip.safe b{color:#14191C}
+.live{width:8px;height:8px;border-radius:50%;background:var(--ok);animation:pulse 1.6s infinite}
+.paused .live{background:var(--dim);animation:none}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(31,163,91,.5)}100%{box-shadow:0 0 0 8px rgba(31,163,91,0)}}
+.simctl{display:flex;align-items:center;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:3px}
+.simctl button{background:none;border:0;border-radius:7px;padding:5px 10px;cursor:pointer;font:600 12px var(--mono);color:var(--muted)}
+.simctl button.on{background:var(--fg);color:var(--bg)}
+.simctl button:hover:not(.on){background:var(--panel2);color:var(--fg)}
+.simctl .sep{width:1px;height:20px;background:var(--line);margin:0 2px}
+
+.ticker{display:flex;align-items:center;gap:10px;margin:12px 0 0;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 12px;overflow:hidden;min-height:38px}
+.ticker .tag{font:700 12px var(--display);letter-spacing:.12em;background:var(--fg);color:var(--bg);padding:2px 8px;border-radius:4px;flex:none}
+.ticker .msg{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;min-width:0;animation:slidein .5s ease}
+.ticker .msg time{font:12px var(--mono);color:var(--muted);margin-right:8px}
+@keyframes slidein{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+
+/* KPIs */
+.kpis{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px;margin:14px 0 18px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px 10px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:2px;min-width:0;position:relative;overflow:hidden;transition:background .6s}
+.kpi .l{font:600 12px var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px}
+.kpi .l .ld{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.kpi .v{font:700 32px/1.05 var(--display);font-variant-numeric:tabular-nums}
+.kpi .v small{font-size:16px;color:var(--muted);font-weight:600;margin-left:2px}
+.kpi .m{font:11px var(--mono);color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.kpi svg.sp{width:100%;height:28px;margin-top:4px;display:block}
+.kpi.flash{background:color-mix(in srgb,var(--accent) 22%,var(--panel))}
+.pill{display:inline-block;padding:1px 7px;border-radius:999px;font:600 11px var(--mono);white-space:nowrap}
+.p-ok{background:color-mix(in srgb,var(--ok) 14%,transparent);color:var(--ok)}
+.p-warn{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.p-bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+
+/* cartões e grades */
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g21{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.g12{grid-template-columns:minmax(0,1fr) minmax(0,2fr)}
+.mt{margin-top:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);min-width:0}
+.card h2{font:700 19px var(--display);letter-spacing:.04em;text-transform:uppercase;margin:0;text-wrap:balance}
+.card .sub{color:var(--muted);font-size:12px;margin:2px 0 12px}
+.chart svg{width:100%;height:auto;display:block;overflow:visible}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font:11px var(--mono);color:var(--muted);margin-bottom:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.note{font-size:12px;color:var(--muted);margin:10px 0 0}
+section[data-view][hidden]{display:none}
+.hint{font:11px var(--mono);color:var(--dim);float:right}
+
+/* svg */
+svg text{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+svg .lbl{fill:var(--fg);font-family:var(--body);font-size:12px}
+svg .val{fill:var(--fg);font-weight:600}
+svg .grid line{stroke:var(--line);stroke-width:1}
+svg [data-tip]{cursor:pointer;transition:opacity .15s,filter .15s}
+svg .bar:hover,svg .arc:hover{filter:brightness(1.08) saturate(1.1);stroke:var(--fg);stroke-width:1.5}
+svg .hit{fill:transparent}
+svg .hit:hover{fill:var(--fg);fill-opacity:.06}
+svg .pt{pointer-events:none}
+.tt{position:fixed;z-index:200;pointer-events:none;background:var(--fg);color:var(--bg);border-radius:8px;padding:8px 11px;font:12px/1.45 var(--body);box-shadow:0 8px 24px rgba(0,0,0,.2);max-width:280px}
+.tt b{display:block;font:700 14px var(--display);letter-spacing:.04em;margin-bottom:2px}
+.tt span{display:block;font:11.5px var(--mono);opacity:.9}
+
+/* exec */
+.exec4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:16px}
+.big{position:relative;overflow:hidden}
+.big .l{font:600 12px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.big .v{font:800 44px/1 var(--display);font-variant-numeric:tabular-nums;margin:6px 0}
+.big .v small{font-size:20px;color:var(--muted);font-weight:600}
+.big .m{font:12px var(--mono);color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.big.hl{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.big.hl .l,.big.hl .m,.big.hl .v small{color:color-mix(in srgb,var(--bg) 70%,transparent)}
+.alerts{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.alerts li{display:grid;grid-template-columns:4px 1fr;gap:10px;background:var(--panel2);border-radius:8px;padding:8px 10px 8px 0;font-size:13px}
+.alerts li i{border-radius:0 3px 3px 0}
+.alerts b{display:block;font-weight:600}
+.alerts span{color:var(--muted);font-size:12px}
+.feed{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;max-height:380px;overflow:auto}
+.feed li{display:grid;grid-template-columns:44px 10px 1fr;gap:8px;align-items:start;padding:6px 4px;border-radius:6px;font-size:13px;animation:slidein .45s ease}
+.feed li time{font:11px var(--mono);color:var(--muted);padding-top:2px}
+.feed li i{width:8px;height:8px;border-radius:50%;margin-top:6px}
+.feed li:first-child{background:color-mix(in srgb,var(--accent) 14%,transparent)}
+
+/* tabelas */
+.tablewrap{overflow-x:auto;margin:0 -4px}
+table{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+th{font:600 12px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px;border-bottom:2px solid var(--line);white-space:nowrap;background:var(--panel)}
+td{padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td.r,th.r{text-align:right}
+tbody tr:hover td{background:var(--panel2)}
+tr.new td{animation:rowflash 2.5s ease}
+@keyframes rowflash{0%{background:color-mix(in srgb,var(--accent) 35%,transparent)}100%{background:transparent}}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
+select,.filters input{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:13px}
+.filters input{width:200px;max-width:100%}
+.count{margin-left:auto;font:12px var(--mono);color:var(--muted)}
+.abc{font:600 12px var(--mono);padding:1px 7px;border-radius:4px}
+.abc-A{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.abc-B{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.abc-C{background:var(--panel2);color:var(--muted)}
+td.heat{text-align:right}
+
+/* 3D */
+.scenecard{padding:0;overflow:hidden}
+.scenebar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.scenebar h2{margin-right:auto}
+.tbtn{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 11px;font-size:12px;cursor:pointer;font-weight:500}
+.tbtn[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.tbtn:hover{border-color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{background:var(--panel);border:0;padding:6px 11px;font-size:12px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button.on{background:var(--accent);color:#14191C;font-weight:600}
+.scenewrap{position:relative}
+.host{position:relative;height:min(70vh,660px);min-height:360px;background:#CBD5DA;cursor:grab}
+.host canvas{display:block;width:100%;height:100%;touch-action:none}
+.host.hov{cursor:pointer}
+.hud{position:absolute;background:var(--glass);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.08)}
+.hud.tl{left:12px;top:12px}
+.hud.tr{right:12px;top:12px;width:300px;max-width:calc(100% - 24px)}
+.hud.bl{left:12px;bottom:12px;width:min(460px,calc(100% - 24px));padding:8px 10px}
+.hud.br{right:12px;bottom:12px}
+.counts{display:grid;grid-template-columns:repeat(4,auto);gap:4px 14px}
+.counts div{display:flex;flex-direction:column;border-left:3px solid;padding-left:7px}
+.counts b{font:700 26px/1 var(--display)}
+.counts span{font:10px var(--mono);color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.hudfeed{list-style:none;margin:0;padding:0;font-size:12px;display:flex;flex-direction:column;gap:3px}
+.hudfeed li{display:flex;gap:8px;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:slidein .4s}
+.hudfeed li:nth-child(2){opacity:.7}.hudfeed li:nth-child(3){opacity:.45}
+.hudfeed time{font:11px var(--mono);color:var(--muted)}
+.hudfeed i{width:7px;height:7px;border-radius:50%;flex:none}
+.det .fr{font:800 38px/1 var(--display)}
+.det .mo{color:var(--muted);font-size:13px;margin:2px 0 8px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px;margin:10px 0 0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.stat{display:inline-flex;align-items:center;gap:6px;font:600 12px var(--mono);padding:3px 9px;border-radius:6px;color:#fff}
+.xbtn{position:absolute;right:8px;top:6px;background:none;border:0;font-size:18px;cursor:pointer;color:var(--muted)}
+.load3d{position:absolute;inset:0;display:grid;place-items:center;color:#3c474d;font:12px var(--mono)}
+.heatlg{display:flex;align-items:center;gap:8px;font:11px var(--mono);color:var(--muted)}
+.heatlg i{display:block;width:120px;height:8px;border-radius:4px;background:linear-gradient(90deg,#A9B7BE,#F2B705,#D93F3F)}
+input[type=range]{accent-color:#14191C;width:130px}
+.comp{display:flex;flex-direction:column;gap:2px}
+.comp button{display:grid;grid-template-columns:22px 1fr 80px 58px;gap:8px;align-items:center;background:none;border:0;border-radius:8px;padding:6px;cursor:pointer;text-align:left;font-size:13px}
+.comp button:hover,.comp button.on{background:var(--panel2)}
+.comp button.on{outline:2px solid var(--accent)}
+.comp .rk{font:600 12px var(--mono);color:var(--muted)}
+.comp .bw{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden}
+.comp .bw i{display:block;height:100%;border-radius:4px}
+.comp .vv{font:600 12px var(--mono);text-align:right}
+.cdet{border-top:1px solid var(--line);margin-top:12px;padding-top:12px}
+.cdet h3{font:800 28px/1 var(--display);margin:0}
+.cdet p{margin:6px 0 0;font-size:13px;color:var(--muted)}
+.vtab td:first-child{font:700 16px var(--display)}
+.vtab tr{cursor:pointer}
+.vtab tr.on td{background:color-mix(in srgb,var(--accent) 18%,transparent)}
+
+/* oficinas */
+.ofgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+.of{border-top:4px solid var(--c)}
+.of .tp{display:flex;justify-content:space-between;gap:8px;align-items:start}
+.of h3{font:700 21px/1.1 var(--display);margin:0;text-wrap:balance}
+.of .coord{color:var(--muted);font-size:12px;margin:3px 0 10px}
+.of .coord b{color:var(--fg);font-weight:600}
+.turnos{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.turnos div{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px;text-align:center}
+.turnos div.now{background:var(--accent);border-color:var(--accent);color:#14191C}
+.turnos b{display:block;font:700 24px/1 var(--display)}
+.turnos span{font:10px var(--mono);color:var(--muted)}
+.turnos div.now span{color:#14191C}
+.mini{display:grid;grid-template-columns:1fr auto;gap:3px 10px;font-size:12px;margin:0}
+.mini dt{color:var(--muted)}
+.mini dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;font-weight:500}
+
+/* segurança */
+.safety{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,2fr);gap:16px;margin-bottom:16px}
+.dsa{background:var(--accent);color:#14191C;border-color:var(--accent);position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.dsa::after{content:"";position:absolute;left:0;right:0;bottom:0;height:12px;background:repeating-linear-gradient(-45deg,#14191C 0 10px,transparent 10px 20px)}
+.dsa .l{font:700 14px var(--display);letter-spacing:.14em;text-transform:uppercase}
+.dsa .n{font:800 110px/.9 var(--display);font-variant-numeric:tabular-nums}
+.dsa .n small{font-size:30px;margin-left:8px}
+.dsa .m{font-size:13px;padding-bottom:10px}
+.k6{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+
+/* modo TV */
+.tv{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
+.tv[hidden]{display:none}
+.tvbar{display:flex;align-items:center;gap:16px;background:var(--side);color:#fff;padding:12px 24px;flex-wrap:wrap}
+.tvbar .brand{padding:0}
+.tvbar h2{font:700 28px var(--display);letter-spacing:.06em;text-transform:uppercase;margin:0 auto 0 12px;color:var(--accent)}
+.tvbar .chip{background:#1E262A;border-color:#2C363B;color:#AEB9BE}
+.tvbar .chip b{color:#fff}
+.tvbar .chip.safe{background:var(--accent);color:#14191C}
+.tvbar .chip.safe b{color:#14191C}
+.tvctl{display:flex;gap:4px}
+.tvctl button{background:#1E262A;border:1px solid #2C363B;color:#fff;border-radius:8px;width:38px;height:34px;cursor:pointer;font-size:14px}
+.tvprog{height:4px;background:var(--line)}
+.tvprog i{display:block;height:100%;width:0;background:var(--accent)}
+.tvdots{display:flex;gap:6px}
+.tvdots i{width:26px;height:4px;border-radius:2px;background:#3A454B}
+.tvdots i.on{background:var(--accent)}
+.tvbody{flex:1;min-height:0;position:relative}
+.tvs{position:absolute;inset:0;padding:22px 26px;display:grid;gap:18px;animation:fadein .6s ease}
+.tvs[hidden]{display:none}
+@keyframes fadein{from{opacity:0;transform:scale(.99)}to{opacity:1;transform:none}}
+.tvk{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px}
+.tvk .kpi .v{font-size:64px}
+.tvk .kpi .l{font-size:16px}
+.tvk .kpi .m{font-size:14px}
+.tv .card h2{font-size:24px}
+.tv .feed li{font-size:16px}
+.tvfill{position:relative;min-height:0;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.tvfill .host{height:100%;min-height:0}
+
+@media (max-width:1400px){.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}.ofgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:1100px){.g21,.g12,.safety{grid-template-columns:1fr}.g3{grid-template-columns:1fr 1fr}.exec4{grid-template-columns:1fr 1fr}}
+@media (max-width:900px){
+  .app{grid-template-columns:1fr}
+  .side{position:fixed;top:auto;bottom:0;left:0;right:0;height:auto;flex-direction:row;padding:0 env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);border-top:3px solid var(--accent)}
+  .stripe,.brand,.navlbl,.sidefoot,#nav button .bd{display:none}
+  #nav{flex-direction:row;overflow-x:auto;padding:6px;gap:2px;scrollbar-width:none;width:100%}
+  #nav button{flex-direction:column;gap:2px;font-size:11px;padding:6px 4px;white-space:nowrap;min-width:72px;align-items:center}
+  #nav .ll{display:none}#nav .ls{display:block}
+  .main{padding-bottom:96px}
+  .top{position:static}
+  .tvk{grid-template-columns:1fr 1fr}
+}
+@media (max-width:700px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.g2,.g3,.ofgrid,.exec4,.k6{grid-template-columns:1fr}.top h1{font-size:24px}.host{height:58vh}.dsa .n{font-size:84px}.hud.tr{top:auto;bottom:12px;left:12px;right:12px;width:auto}.hud.bl{display:none}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="side">
+    <div class="stripe"></div>
+    <div class="brand"><div class="lg">T</div><div><b>TORQUE</b><small>gestão de manutenção</small></div></div>
+    <div class="navlbl">Painéis</div>
+    <nav id="nav" aria-label="Seções"></nav>
+    <div class="sidefoot">
+      <button class="sbtn tvb" id="tvOpen">▶ MODO TV</button>
+      <button class="sbtn" id="themeBtn">Tema escuro</button>
+      <span class="credit">Painel de portfólio · dados fictícios<br>Marcelo Parreira</span>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+    <header class="top">
+      <div class="tl"><h1 id="vTitle">Visão Gerencial</h1><p id="vSub"></p></div>
+      <div class="chips">
+        <span class="chip" id="simChip"><span class="live"></span><b id="clock">--:--</b><span id="clockD"></span></span>
+        <span class="chip">Turno <b id="turnoNow">A</b></span>
+        <span class="chip">Na área <b id="naArea">0</b></span>
+        <span class="chip safe">Sem acidente <b id="dsaChip">0</b> dias</span>
+      </div>
+      <div class="simctl" role="group" aria-label="Simulação">
+        <button id="bPlay" title="Pausar a simulação">❚❚</button><span class="sep"></span>
+        <button data-sp="1">1×</button><button data-sp="60" class="on">60×</button><button data-sp="300">300×</button><span class="sep"></span><button id="tvOpen2" title="Abrir o modo TV">▶ TV</button>
+      </div>
+    </header>
+    <div class="ticker"><span class="tag">AO VIVO</span><div class="msg" id="ticker">Iniciando a simulação…</div></div>
+    <div class="kpis" id="kpis"></div>
+
+    <!-- GERENCIAL -->
+    <section data-view="gerencial">
+      <div class="exec4" id="exec4"></div>
+      <div class="grid g21">
+        <div class="card"><span class="hint">passe o mouse nas barras</span><h2>Custo por oficina</h2><p class="sub">Realizado em out/26 · traço preto = orçado · % = variação</p><div class="chart" id="cOfCusto"></div></div>
+        <div class="card"><h2>Acontecendo agora</h2><p class="sub">Eventos da simulação em tempo real</p><ul class="feed" id="feed"></ul></div>
+      </div>
+      <div class="grid g3 mt">
+        <div class="card"><h2>Evolução do custo</h2><p class="sub">Realizado × orçado na safra · R$ milhões</p><div class="legend" id="lgMes"></div><div class="chart" id="cMes"></div></div>
+        <div class="card"><h2>Natureza do gasto</h2><p class="sub">Para onde foi o dinheiro em out/26</p><div class="chart" id="cNat"></div></div>
+        <div class="card"><h2>Pontos de atenção</h2><p class="sub">Gerados a partir dos indicadores</p><ul class="alerts" id="alerts"></ul></div>
+      </div>
+      <div class="card mt"><h2>Custo por setor e natureza</h2><p class="sub">R$ mil em out/26 · quanto mais forte a cor, maior o gasto</p><div class="tablewrap" id="tMatriz"></div></div>
+      <div class="card mt"><h2>Os 10 equipamentos que mais custaram</h2><p class="sub">Candidatos a análise de reforma, troca ou causa raiz</p><div class="tablewrap" id="tTop"></div></div>
+    </section>
+
+    <!-- PÁTIO -->
+    <section data-view="patio" hidden>
+      <div class="card scenecard">
+        <div class="scenebar">
+          <h2>Pátio da oficina central</h2>
+          <select id="fOf3d" aria-label="Destacar oficina"><option value="">Todas as oficinas</option></select>
+          <div class="seg" id="dayseg"><button data-m="dia" class="on">Dia</button><button data-m="noite">Noite</button></div>
+          <button class="tbtn" id="bCine" aria-pressed="false">Câmera cinema</button>
+          <button class="tbtn" id="bRoof" aria-pressed="true">Telhado</button>
+          <button class="tbtn" id="bLabels" aria-pressed="true">Frotas</button>
+          <button class="tbtn" id="bTop">De cima</button>
+          <button class="tbtn" id="bReset">Recentrar</button>
+        </div>
+        <div class="scenewrap">
+          <div class="host" id="patioHost"><div class="load3d">Montando o pátio…</div></div>
+          <div class="hud tl"><div class="counts" id="hudCounts"></div></div>
+          <div class="hud tr det" id="hudDet" hidden></div>
+          <div class="hud bl"><ul class="hudfeed" id="hudFeed"></ul></div>
+        </div>
+      </div>
+      <div class="grid g21 mt">
+        <div class="card"><h2>Máquinas no pátio</h2><p class="sub">Clique na linha para localizar no 3D · horas contando ao vivo</p><div class="tablewrap" id="tPatio"></div></div>
+        <div class="card"><h2>Disponibilidade mecânica</h2><p class="sub">DM do mês por frota · traço = meta</p><div class="chart" id="cDM"></div></div>
+      </div>
+      <div class="grid g2 mt">
+        <div class="card"><h2>Tendência da DM</h2><p class="sub">Últimas 12 semanas · passe o mouse para ver a semana</p><div class="legend" id="lgTrend"></div><div class="chart" id="cTrend"></div></div>
+        <div class="card"><h2>Tipo de manutenção</h2><p class="sub">Horas-homem no mês · meta preventiva ≥ 45%</p><div class="chart" id="cTipo"></div></div>
+      </div>
+    </section>
+
+    <!-- COLHEDORA -->
+    <section data-view="colhedora" hidden>
+      <div class="grid g21">
+        <div class="card scenecard">
+          <div class="scenebar">
+            <h2>Colhedora explodida</h2>
+            <div class="seg" id="cmode"><button data-m="custo" class="on">Custo</button><button data-m="falhas">Falhas</button><button data-m="real">Cores reais</button></div>
+            <label class="heatlg" for="explode">Explodir <input type="range" id="explode" min="0" max="100" value="60"></label>
+            <button class="tbtn" id="bCLabels" aria-pressed="true">Nomes</button>
+            <button class="tbtn" id="bCRot" aria-pressed="true">Girar</button>
+          </div>
+          <div class="scenewrap">
+            <div class="host" id="colhHost"><div class="load3d">Montando a colhedora…</div></div>
+            <div class="hud tl heatlg" id="heatLg"><span>menor</span><i></i><span>maior custo</span></div>
+            <div class="hud br" style="font:11px var(--mono);color:var(--muted)">Arraste para girar · clique numa peça</div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Componentes da colhedora</h2><p class="sub">32 colhedoras · safra 26/27 até out · clique para destacar</p>
+          <div class="comp" id="compList"></div>
+          <div class="cdet" id="compDet"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- OFICINAS -->
+    <section data-view="oficinas" hidden>
+      <div class="ofgrid" id="ofgrid"></div>
+      <div class="grid g2 mt">
+        <div class="card"><h2>Efetivo por turno</h2><p class="sub">A 07:00–15:20 · B 15:20–23:40 · C 23:40–07:00 · turno atual em destaque</p><div class="legend" id="lgHead"></div><div class="chart" id="cHead"></div></div>
+        <div class="card"><h2>Backlog em semanas</h2><p class="sub">Carteira ÷ capacidade semanal · faixa verde = ideal 2 a 4</p><div class="chart" id="cBacklog"></div></div>
+      </div>
+    </section>
+
+    <!-- PESSOAS -->
+    <section data-view="pessoas" hidden>
+      <div class="safety"><div class="card dsa" id="dsa"></div><div class="k6" id="k6"></div></div>
+      <div class="card"><h2>Pessoas por oficina</h2><p class="sub">Mês corrente · absenteísmo = horas ausentes ÷ horas previstas · meta 3%</p><div class="tablewrap" id="tPessoas"></div></div>
+      <div class="grid g3 mt">
+        <div class="card"><h2>Absenteísmo por oficina</h2><p class="sub">% do mês · linha = meta 3%</p><div class="chart" id="cAbs"></div></div>
+        <div class="card"><h2>Motivos das ausências</h2><p class="sub">Horas ausentes no mês</p><div class="chart" id="cAbsMot"></div></div>
+        <div class="card"><h2>Absenteísmo na safra</h2><p class="sub">Toda a manutenção · % por mês</p><div class="chart" id="cAbsMes"></div></div>
+      </div>
+      <div class="grid g2 mt">
+        <div class="card"><h2>Pirâmide de Bird</h2><p class="sub">Ocorrências na safra 26/27 · cresce ao vivo com os relatos</p><div class="chart" id="cBird"></div></div>
+        <div class="card"><h2>Treinamentos obrigatórios</h2><p class="sub">Capacitações por norma regulamentadora</p><div class="tablewrap" id="tNR"></div></div>
+      </div>
+      <div class="card mt"><h2>Ocorrências</h2><p class="sub">Acidentes e quase-acidentes da manutenção</p><div class="tablewrap" id="tOcor"></div></div>
+    </section>
+
+    <!-- ANÁLISE -->
+    <section data-view="analise" hidden>
+      <div class="card"><h2>Pareto de horas paradas por sistema</h2><p class="sub">Toda a frota · mês corrente · em amarelo os sistemas que somam 80% das horas</p><div class="chart" id="cPareto"></div></div>
+      <div class="grid g2 mt">
+        <div class="card"><h2>Curva ABC de peças</h2><p class="sub">Consumo acumulado em R$ · A até 80% · B até 95% · C restante</p><div class="chart" id="cABC"></div></div>
+        <div class="card"><h2>Itens da curva</h2><p class="sub">Ordenado por consumo no mês</p><div class="tablewrap" id="tABC"></div></div>
+      </div>
+    </section>
+
+    <!-- FROTA -->
+    <section data-view="frota" hidden>
+      <div class="card"><h2>Indicadores por frota</h2><p class="sub">DM, MTBF e MTTR do mês · custo de manutenção apropriado</p><div class="tablewrap" id="tFrota"></div></div>
+      <div class="grid g2 mt">
+        <div class="card"><h2>Custo de manutenção por frota</h2><p class="sub">R$ em out/26</p><div class="chart" id="cCusto"></div></div>
+        <div class="card"><h2>MTBF × MTTR</h2><p class="sub">Melhor é à direita e embaixo · bolha = tamanho da frota</p><div class="chart" id="cScatter"></div></div>
+      </div>
+    </section>
+
+    <!-- OS -->
+    <section data-view="os" hidden>
+      <div class="card">
+        <h2>Ordens de serviço</h2><p class="sub">Novas OS aparecem destacadas conforme a simulação roda</p>
+        <div class="filters">
+          <select id="fOf" aria-label="Oficina"><option value="">Todas as oficinas</option></select>
+          <select id="fSt" aria-label="Status"><option value="">Todos os status</option></select>
+          <select id="fTp" aria-label="Tipo"><option value="">Todos os tipos</option></select>
+          <input id="fQ" type="search" placeholder="Buscar frota, OS, sistema…" aria-label="Buscar">
+          <span class="count" id="osCount"></span>
+        </div>
+        <div class="tablewrap" id="tOS"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- MODO TV -->
+<div class="tv" id="tv" hidden>
+  <div class="tvbar">
+    <div class="brand"><div class="lg">T</div><div><b>TORQUE</b></div></div>
+    <h2 id="tvTitle">Visão geral</h2>
+    <div class="tvdots" id="tvDots"></div>
+    <span class="chip"><b id="tvClock">--:--</b></span>
+    <span class="chip">Turno <b id="tvTurno">A</b></span>
+    <span class="chip safe">Sem acidente <b id="tvDsa">0</b> dias</span>
+    <div class="tvctl"><button id="tvPrev" aria-label="Anterior">◀</button><button id="tvPause" aria-label="Pausar">❚❚</button><button id="tvNext" aria-label="Próxima">▶</button><button id="tvClose" aria-label="Sair do modo TV">✕</button></div>
+  </div>
+  <div class="tvprog"><i id="tvProg"></i></div>
+  <div class="tvbody">
+    <div class="tvs" data-s="0" style="grid-template-rows:auto 1fr">
+      <div class="tvk" id="tvK"></div>
+      <div class="grid g21" style="min-height:0">
+        <div class="card" style="overflow:auto"><h2>Custo por oficina · out/26</h2><div class="chart" id="tvCusto"></div></div>
+        <div class="card" style="overflow:hidden"><h2>Acontecendo agora</h2><ul class="feed" id="tvFeed" style="max-height:none"></ul></div>
+      </div>
+    </div>
+    <div class="tvs" data-s="1" hidden style="grid-template-rows:1fr">
+      <div class="tvfill"><div class="host" id="tvPatio"></div><div class="hud tl"><div class="counts" id="tvCounts"></div></div><div class="hud bl"><ul class="hudfeed" id="tvHudFeed"></ul></div></div>
+    </div>
+    <div class="tvs" data-s="2" hidden style="grid-template-columns:2fr 1fr">
+      <div class="tvfill"><div class="host" id="tvColh"></div><div class="hud tl heatlg"><span>menor</span><i></i><span>maior custo</span></div></div>
+      <div class="card" style="overflow:auto"><h2>Onde a colhedora gasta</h2><div class="comp" id="tvComp"></div></div>
+    </div>
+    <div class="tvs" data-s="3" hidden style="grid-template-columns:1fr 1.4fr;align-content:start">
+      <div class="card dsa" id="tvSafe"></div>
+      <div class="card"><h2>Absenteísmo por oficina</h2><div class="chart" id="tvAbs"></div></div>
+    </div>
+    <div class="tvs" data-s="4" hidden style="align-content:start">
+      <div class="ofgrid" id="tvOf"></div>
+    </div>
+  </div>
+</div>
+<div class="tt" id="tt" hidden></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function(){
+"use strict";
+/* ================= utilitários ================= */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R=mulberry32(20261106);
+const pick=a=>a[Math.floor(R()*a.length)];
+const rint=(a,b)=>Math.floor(a+R()*(b-a+1));
+const rpick=a=>a[Math.floor(Math.random()*a.length)];
+const $=id=>document.getElementById(id);
+const nf=(v,d=0)=>Number(v).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const brl=v=>v>=1e6?'R$ '+nf(v/1e6,2)+' mi':v>=1e3?'R$ '+nf(v/1e3,0)+' mil':'R$ '+nf(v,0);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const hhmm=ms=>{const d=new Date(ms);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')};
+const pv=(d)=>`<span class="pill p-${d<=0?'ok':d<=5?'warn':'bad'}">${d>0?'+':''}${nf(d,1)}%</span>`;
+
+/* ================= cadastro ================= */
+const OF=[
+ {id:'colh',nome:'Colhedoras',curto:'Colhedoras',coord:'Josué Almeida',t:[16,14,10],cor:'#4E9A4A',extra:3100,apr:81,foco:'Picador, corte de base, esteiras e hidráulico',custo:2046000,orc:2000000,nat:[.52,.18,.14,.12,.04],dsa:47,abs:4.1,he:612,bh:380,ferias:3,tvenc:4},
+ {id:'pesada',nome:'Caminhões & Pesados',curto:'Pesados',coord:'Edson Batista',t:[14,12,6],cor:'#2F7FD8',extra:2600,apr:77,foco:'Cavalos canavieiros, pipas, pranchas e reboques',custo:1180000,orc:1250000,nat:[.38,.20,.12,.10,.20],dsa:212,abs:2.8,he:420,bh:210,ferias:2,tvenc:1},
+ {id:'agri',nome:'Tratores & Implementos',curto:'Agrícola',coord:'Valdir Rocha',t:[12,10,4],cor:'#E0892B',extra:1500,apr:84,foco:'Tratores, transbordos e implementos de plantio',custo:860000,orc:950000,nat:[.40,.22,.12,.14,.12],dsa:96,abs:3.4,he:288,bh:150,ferias:2,tvenc:2},
+ {id:'leve',nome:'Frota Leve',curto:'Frota leve',coord:'Ricardo Menezes',t:[8,6,0],cor:'#7D8B94',extra:300,apr:72,foco:'Picapes e utilitários de apoio',custo:210000,orc:200000,nat:[.34,.20,.30,.08,.08],dsa:418,abs:1.9,he:40,bh:30,ferias:1,tvenc:0},
+ {id:'eletr',nome:'Elétrica Automotiva',curto:'Elétrica',coord:'Fabiana Lima',t:[7,5,3],cor:'#C9A100',extra:1900,apr:86,foco:'Chicotes, alternadores, partida e telemetria',custo:420000,orc:380000,nat:[.48,.32,.18,0,.02],dsa:305,abs:2.2,he:210,bh:120,ferias:1,tvenc:3},
+ {id:'borr',nome:'Borracharia',curto:'Borracharia',coord:'Antônio Pires',t:[5,4,2],cor:'#9B5FC0',extra:260,apr:79,foco:'Pneus rodoviários e agrícolas, rodízio e recapagem',custo:380000,orc:420000,nat:[.08,.22,.10,0,.60],dsa:18,abs:5.2,he:96,bh:60,ferias:0,tvenc:1},
+ {id:'solda',nome:'Solda & Caldeiraria',curto:'Solda',coord:'Cláudio Nunes',t:[6,4,0],cor:'#C8553D',extra:1600,apr:74,foco:'Estruturas, caçambas e recuperação de peças',custo:290000,orc:340000,nat:[.36,.38,.22,.02,.02],dsa:133,abs:3.9,he:260,bh:190,ferias:1,tvenc:2},
+ {id:'volante',nome:'Oficina Volante · Comboios',curto:'Volante',coord:'Gilmar Souza',t:[9,9,6],cor:'#1B9AA0',extra:1200,apr:88,foco:'Atendimento no campo, lubrificação e socorro',custo:330000,orc:360000,nat:[.22,.30,.06,.38,.04],dsa:64,abs:3.1,he:380,bh:260,ferias:2,tvenc:1}
+];
+const OFM=Object.fromEntries(OF.map(o=>[o.id,o]));
+const TURNOS=[{k:'A',txt:'07:00–15:20'},{k:'B',txt:'15:20–23:40'},{k:'C',txt:'23:40–07:00'}];
+const TIPOS=[
+ {id:'colh',sing:'Colhedora',nome:'Colhedoras',qtd:32,pref:40,modelos:['John Deere CH570','Case A8810'],of:'colh',meta:85,dm:82.4,mtbf:41,mttr:5.1,custo:2840000,hm:520},
+ {id:'cam',sing:'Caminhão canavieiro',nome:'Caminhões canavieiros',qtd:58,pref:20,modelos:['Scania R450 8x4','Volvo FH 540 6x4','Mercedes Actros 2651'],of:'pesada',meta:90,dm:91.2,mtbf:112,mttr:6.4,custo:1150000,hm:480},
+ {id:'apoio',sing:'Caminhão de apoio',nome:'Caminhões de apoio',qtd:16,pref:25,modelos:['VW Constellation pipa','Mercedes Atego prancha'],of:'pesada',meta:90,dm:88.7,mtbf:140,mttr:7.9,custo:286000,hm:300},
+ {id:'trat',sing:'Trator',nome:'Tratores',qtd:84,pref:30,modelos:['John Deere 7230J','Case Magnum 340','Valtra BH194'],of:'agri',meta:92,dm:93.5,mtbf:96,mttr:4.2,custo:940000,hm:430},
+ {id:'transb',sing:'Transbordo',nome:'Transbordos',qtd:64,pref:35,modelos:['Transbordo Antoniosi 12 t','Transbordo Planalto 10 t'],of:'agri',meta:94,dm:95.1,mtbf:210,mttr:3.1,custo:210000,hm:380},
+ {id:'leve',sing:'Picape',nome:'Frota leve',qtd:46,pref:10,modelos:['Toyota Hilux','Fiat Strada','VW Saveiro'],of:'leve',meta:95,dm:96.8,mtbf:380,mttr:2.6,custo:168000,hm:220},
+ {id:'comb',sing:'Comboio',nome:'Comboios de lubrificação',qtd:8,pref:50,modelos:['Ford Cargo 2429 comboio'],of:'volante',meta:93,dm:90.4,mtbf:160,mttr:3.8,custo:122000,hm:400}
+];
+const TM=Object.fromEntries(TIPOS.map(t=>[t.id,t]));
+const FROTA_TOTAL=TIPOS.reduce((a,t)=>a+t.qtd,0);
+const ORCADO=5900000;
+const SIST={colh:['Hidráulico','Picador','Corte de base','Esteira','Motor','Elétrico','Ar-condicionado'],cam:['Motor','Freios','Pneus','Transmissão','Elétrico','Suspensão'],apoio:['Motor','Freios','Bomba d’água','Elétrico'],trat:['Hidráulico','Transmissão','Motor','Pneus','Elétrico'],transb:['Estrutura','Pneus','Hidráulico'],leve:['Revisão 10 mil km','Freios','Suspensão','Elétrico','Pneus'],comb:['Bomba de lubrificação','Mangueiras','Motor']};
+const PECA_DE={'Hidráulico':'mangueira hidráulica','Picador':'jogo de facas do picador','Corte de base':'disco de corte de base','Esteira':'sapatas da esteira','Motor':'kit de juntas do motor','Elétrico':'alternador','Ar-condicionado':'compressor do ar','Freios':'lonas de freio','Pneus':'pneu 295/80','Transmissão':'kit de embreagem','Suspensão':'feixe de molas','Bomba d’água':'bomba d’água','Estrutura':'chapa de reforço','Bomba de lubrificação':'bomba pneumática','Mangueiras':'carretel de mangueira','Revisão 10 mil km':'kit de filtros'};
+const MEC=['Adriano','Bruno','Carlos','Diego','Elton','Fábio','Gustavo','Hélio','Igor','Jefferson','Kléber','Leandro','Marcos','Nilson','Otávio','Paulo','Rafael','Sérgio','Tadeu','Vinícius','Wellington','Júlio'];
+const FRENTES=['Frente 03 · Faz. Boa Vista','Frente 07 · Faz. Santa Rita','Frente 11 · Faz. Pontal','Frente 05 · Faz. Cachoeira','Frente 09 · Faz. Barreiro'];
+const FROTA={};
+TIPOS.forEach(t=>{FROTA[t.id]=Array.from({length:t.qtd},(_,i)=>({frota:String(t.pref*100+i+1),tipo:t.id,modelo:t.modelos[i%t.modelos.length]}))});
+
+const NAT=['Peças e componentes','Mão de obra própria','Serviços de terceiros','Lubrificantes e fluidos','Pneus e recapagem'];
+const NATC=['#F2B705','#2F7FD8','#9B5FC0','#1B9AA0','#7D8B94'];
+const MESES=['Abr','Mai','Jun','Jul','Ago','Set','Out'],REAL=[4.62,5.05,5.38,5.61,5.84,5.49,5.716],ORCM=[4.8,5.2,5.5,5.7,5.9,5.9,5.9],TCANA=[520,610,640,655,660,600,590];
+const PARETO=[['Hidráulico',412],['Motor',318],['Esteira / rodante',276],['Elétrico',241],['Picador / corte',198],['Transmissão',152],['Pneus',131],['Ar-condicionado',74],['Freios',61],['Arrefecimento',48],['Estrutura / solda',39],['Outros',32]];
+const PECAS=[['Faca do picador (jogo)',486000],['Óleo hidráulico ISO 68',392000],['Pneu 295/80 R22.5',351000],['Mangueira hidráulica',288000],['Disco de corte de base',246000],['Esteira / sapata',198000],['Filtro de ar primário',132000],['Óleo motor 15W40',121000],['Rolamentos diversos',96000],['Bateria 150 Ah',84000],['Filtro de combustível',71000],['Pneu agrícola 18.4-38',66000],['Lona / pastilha de freio',48000],['Graxa EP2',41000],['Farol LED de trabalho',29000],['Correias diversas',24000],['Fusíveis e relés',13000],['Abraçadeiras',8000]];
+const OCOR=[
+ {d:'21/10/2026',of:'borr',tipo:'Sem afastamento',desc:'Torção no punho ao desmontar pneu agrícola',acao:'Uso obrigatório do desmontador hidráulico'},
+ {d:'02/10/2026',of:'volante',tipo:'Quase-acidente',desc:'Mangueira de graxa rompeu sob pressão no comboio',acao:'Troca preventiva de mangueiras a cada 6 meses'},
+ {d:'20/09/2026',of:'colh',tipo:'Com afastamento',desc:'Prensamento de dedo na troca de faca do picador',acao:'Bloqueio e etiquetagem (LOTO) e travamento do rolo'},
+ {d:'11/09/2026',of:'agri',tipo:'Quase-acidente',desc:'Trator movimentou com mecânico sob o implemento',acao:'Calço obrigatório e chave retirada da ignição'},
+ {d:'29/08/2026',of:'solda',tipo:'Sem afastamento',desc:'Queimadura leve no antebraço durante solda de caçamba',acao:'Reforço do uso de mangote de raspa'},
+ {d:'14/08/2026',of:'eletr',tipo:'Quase-acidente',desc:'Curto em chicote com bateria conectada',acao:'Desligar a chave geral antes de qualquer intervenção'}
+];
+const NRS=[
+ {nr:'NR-12',nome:'Segurança em máquinas',pub:'Mecânicos de todas as oficinas',tot:132,ok:121,v30:7},
+ {nr:'NR-10',nome:'Eletricidade',pub:'Elétrica automotiva',tot:15,ok:11,v30:1},
+ {nr:'NR-35',nome:'Trabalho em altura',pub:'Colhedoras, pesados e solda',tot:46,ok:40,v30:3},
+ {nr:'NR-11',nome:'Ponte rolante e içamento',pub:'Colhedoras e pesados',tot:28,ok:26,v30:1},
+ {nr:'NR-20',nome:'Inflamáveis e combustíveis',pub:'Oficina volante e comboios',tot:24,ok:22,v30:1},
+ {nr:'NR-31',nome:'Trabalho rural e agroindústria',pub:'Toda a manutenção',tot:172,ok:164,v30:5}
+];
+const ABSM=[3.9,3.6,3.2,3.4,3.7,3.3,3.3];
+const BIRD=[1,2,9,47,386];
+const SAFE={dsaCA:47,dsaAny:18,rec:186};
+const COMP=[
+ {id:'picador',n:'Picador',custo:2900,fal:186,pecas:'Facas e contrafacas, tambor, rolamentos',obs:'Maior custo da máquina: terra e pedra na cana gastam as facas mais rápido.'},
+ {id:'corte',n:'Corte de base',custo:2300,fal:142,pecas:'Discos, lâminas, caixa de engrenagens',obs:'Corte baixo demais aumenta o desgaste e leva terra para a indústria.'},
+ {id:'hidr',n:'Sistema hidráulico',custo:2100,fal:214,pecas:'Mangueiras, bombas, motores hidráulicos, óleo',obs:'Campeão de falhas: mangueira rompida para a máquina na hora e suja a cana.'},
+ {id:'esteira',n:'Esteiras',custo:1700,fal:96,pecas:'Sapatas, roletes, rodas motrizes, pinos',obs:'Desgaste acelerado em solo arenoso e em manobras de cabeceira.'},
+ {id:'motor',n:'Motor',custo:1500,fal:58,pecas:'Juntas, bicos injetores, turbina, filtros',obs:'Poucas falhas, mas cada uma custa caro e deixa a máquina dias parada.'},
+ {id:'elev',n:'Elevador',custo:1200,fal:121,pecas:'Taliscas, correntes, rodas dentadas',obs:'Corrente e taliscas quebram com sobrecarga e cana com palha.'},
+ {id:'rolos',n:'Rolos alimentadores',custo:620,fal:88,pecas:'Rolos, rolamentos, motores hidráulicos',obs:'Embuchamento por cana deitada é a causa principal.'},
+ {id:'ext1',n:'Extrator primário',custo:480,fal:64,pecas:'Hélice, motor hidráulico, capô',obs:'Hélice desbalanceada gera vibração e quebra de suporte.'},
+ {id:'transm',n:'Transmissão',custo:440,fal:22,pecas:'Redutores, óleo de transmissão',obs:'Baixa falha; atenção à troca de óleo no plano de preventiva.'},
+ {id:'div',n:'Divisores de linha',custo:310,fal:71,pecas:'Sapatas, espirais, motores hidráulicos',obs:'Batida em toco e pedra; sapata de desgaste é peça de giro alto.'},
+ {id:'eletr',n:'Elétrica e chicotes',custo:290,fal:133,pecas:'Chicotes, sensores, fusíveis, baterias',obs:'Muitas falhas baratas, mas param a máquina; roedor e vibração.'},
+ {id:'chassi',n:'Chassi e estrutura',custo:210,fal:26,pecas:'Chapas, soldas de reforço',obs:'Trincas em suportes recuperadas pela solda na entressafra.'},
+ {id:'ac',n:'Ar-condicionado',custo:160,fal:47,pecas:'Compressor, filtros, gás',obs:'Filtro entupido por pó; afeta o conforto e a produtividade do operador.'},
+ {id:'ext2',n:'Extrator secundário',custo:120,fal:31,pecas:'Capuz, hélice, motor hidráulico',obs:'Desgaste de capuz por impacto de cana.'},
+ {id:'cab',n:'Cabine',custo:90,fal:18,pecas:'Vidros, banco, painel',obs:'Vidros trincados por pedra lançada.'}
+];
+const COMPM=Object.fromEntries(COMP.map(c=>[c.id,c]));
+const HOP_COLH=32*520*7;
+
+/* ================= tooltip ================= */
+const tt=$('tt');
+function showTip(el,x,y){const p=el.getAttribute('data-tip').split('|');tt.innerHTML='<b>'+esc(p[0])+'</b>'+p.slice(1).map(s=>'<span>'+esc(s)+'</span>').join('');tt.hidden=false;placeTip(x,y)}
+function placeTip(x,y){const w=tt.offsetWidth,h=tt.offsetHeight;let l=x+14,t=y+14;if(l+w>innerWidth-8)l=x-w-14;if(t+h>innerHeight-8)t=y-h-14;tt.style.left=Math.max(8,l)+'px';tt.style.top=Math.max(8,t)+'px'}
+document.addEventListener('pointermove',e=>{const el=e.target.closest&&e.target.closest('[data-tip]');if(el)showTip(el,e.clientX,e.clientY);else if(!tt.hidden&&e.pointerType==='mouse')tt.hidden=true});
+document.addEventListener('pointerdown',e=>{const el=e.target.closest&&e.target.closest('[data-tip]');if(el&&e.pointerType!=='mouse')showTip(el,e.clientX,e.clientY);else if(!el)tt.hidden=true});
+document.addEventListener('scroll',()=>tt.hidden=true,true);
+
+/* ================= gráficos ================= */
+const svg=(w,h,inner,label)=>`<svg viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(label||'')}">${inner}</svg>`;
+const sc=(v,m)=>v>=m?'var(--ok)':v>=m-3?'var(--warn)':'var(--bad)';
+function hbars(el,o){
+  const rows=o.rows,W=o.W||460,L=o.L||160,Rr=o.R||70,rh=o.rh||32,H=rows.length*rh+26,mn=o.min||0,mx=o.max;
+  const x=v=>L+(Math.min(Math.max(v,mn),mx)-mn)/(mx-mn)*(W-L-Rr);
+  let g='';
+  if(o.band)g+=`<rect x="${x(o.band[0])}" y="0" width="${x(o.band[1])-x(o.band[0])}" height="${H-22}" style="fill:var(--ok);fill-opacity:.1"/>`;
+  g+='<g class="grid">'+o.ticks.map(t=>`<line x1="${x(t)}" x2="${x(t)}" y1="0" y2="${H-22}"/><text x="${x(t)}" y="${H-6}" text-anchor="middle">${o.tf?o.tf(t):t}</text>`).join('')+'</g>';
+  rows.forEach((r,i)=>{const y=4+i*rh,bh=rh-12,end=Math.max(r.v,r.m==null?-1e18:r.m);
+    g+=`<rect class="hit" data-tip="${esc(r.tip)}" x="0" y="${y-4}" width="${W}" height="${rh}"/>`;
+    g+=`<text class="lbl pt" x="${L-8}" y="${y+bh/2+5}" text-anchor="end">${esc(r.l)}</text><rect class="bar" data-tip="${esc(r.tip)}" x="${x(mn)}" y="${y+1}" width="${Math.max(2,x(r.v)-x(mn))}" height="${bh}" rx="4" style="fill:${r.c}"/>`;
+    if(r.m!=null)g+=`<line class="pt" x1="${x(r.m)}" x2="${x(r.m)}" y1="${y-3}" y2="${y+bh+5}" style="stroke:var(--fg)" stroke-width="2.5"/>`;
+    g+=`<text class="val pt" x="${x(end)+7}" y="${y+bh/2+(r.sub?0:5)}">${r.vl}</text>`;
+    if(r.sub)g+=`<text class="pt" x="${x(end)+7}" y="${y+bh/2+13}" style="fill:${r.subc||'var(--muted)'}">${r.sub}</text>`});
+  if(o.line!=null)g+=`<line class="pt" x1="${x(o.line)}" x2="${x(o.line)}" y1="0" y2="${H-22}" style="stroke:var(--fg)" stroke-width="2" stroke-dasharray="5 4"/>`;
+  el.innerHTML=svg(W,H,g,o.label)+(o.note?`<p class="note">${o.note}</p>`:'');
+}
+function donut(el,parts,center,sub,unit){
+  const W=440,H=230,cx=108,cy=115,r=80,sw=30,tot=parts.reduce((a,p)=>a+p.v,0);let a0=-Math.PI/2,g='';
+  parts.forEach(p=>{const a1=a0+p.v/tot*Math.PI*2-.02,large=a1-a0>Math.PI?1:0,ri=r-sw/2,ro=r+sw/2;
+    const P=(rr,a)=>`${(cx+rr*Math.cos(a)).toFixed(2)} ${(cy+rr*Math.sin(a)).toFixed(2)}`;
+    g+=`<path class="arc" data-tip="${esc(p.n+'|'+p.lv+'|'+nf(p.v/tot*100,1)+'% do total')}" d="M${P(ro,a0)} A${ro} ${ro} 0 ${large} 1 ${P(ro,a1)} L${P(ri,a1)} A${ri} ${ri} 0 ${large} 0 ${P(ri,a0)} Z" style="fill:${p.c}"/>`;a0=a1+.02});
+  g+=`<text class="pt" x="${cx}" y="${cy+4}" text-anchor="middle" style="font:700 30px var(--display);fill:var(--fg)">${center}</text><text class="pt" x="${cx}" y="${cy+24}" text-anchor="middle">${sub}</text>`;
+  parts.forEach((p,i)=>{const y=Math.max(14,cy-parts.length*20+i*40+8);g+=`<g data-tip="${esc(p.n+'|'+p.lv+'|'+nf(p.v/tot*100,1)+'% do total')}"><rect x="222" y="${y-6}" width="${W-222}" height="36" style="fill:transparent"/><rect x="226" y="${y}" width="11" height="11" rx="2" style="fill:${p.c}"/><text class="lbl" x="244" y="${y+10}">${p.n}</text><text class="val" x="${W-6}" y="${y+10}" text-anchor="end">${nf(p.v/tot*100,0)}%</text><text x="244" y="${y+26}">${p.lv}</text></g>`});
+  el.innerHTML=svg(W,H,g,center);
+}
+function sparkPath(vals,w=200,h=28){const mn=Math.min(...vals),mx=Math.max(...vals),rg=mx-mn||1;return vals.map((v,i)=>(i?'L':'M')+(i/(vals.length-1)*w).toFixed(1)+' '+(h-3-(v-mn)/rg*(h-6)).toFixed(1)).join(' ')}
+function spark(vals,col){if(!vals||vals.length<2)return '';const d=sparkPath(vals),last=d.split(' ').slice(-2);return `<svg class="sp" viewBox="0 0 200 28" preserveAspectRatio="none"><path d="${d} L200 28 L0 28 Z" style="fill:${col};fill-opacity:.12"/><path d="${d}" fill="none" style="stroke:${col}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`}
+
+/* ---------- gerencial ---------- */
+function chartOfCusto(el,W,rh){
+  hbars(el,{W:W||640,L:190,R:110,rh:rh||38,max:2.3e6,ticks:[0,.5e6,1e6,1.5e6,2e6],tf:t=>t?nf(t/1e6,1)+' mi':'0',label:'Custo por oficina',
+    rows:[...OF].sort((a,b)=>b.custo-a.custo).map(o=>{const d=(o.custo/o.orc-1)*100;return{l:o.nome.replace(' · ',' / '),v:o.custo,m:o.orc,c:o.cor,vl:brl(o.custo),sub:(d>0?'+':'')+nf(d,1)+'% vs orçado',subc:d<=0?'var(--ok)':d<=5?'var(--warn)':'var(--bad)',
+      tip:`${o.nome}|Realizado: ${brl(o.custo)}|Orçado: ${brl(o.orc)}|Variação: ${d>0?'+':''}${nf(d,1)}% (${d>0?'+':'−'}${brl(Math.abs(o.custo-o.orc))})|Coordenador: ${o.coord}`}})});
+}
+function chartMes(el){
+  $('lgMes').innerHTML=`<span><i style="background:var(--accent)"></i>Realizado</span><span><i style="background:var(--fg);height:3px;vertical-align:3px"></i>Orçado</span><span><i style="background:var(--prev)"></i>R$/t cana</span>`;
+  const W=460,H=250,L=30,Rr=34,T=18,B=26,n=MESES.length,bw=(W-L-Rr)/n,y=v=>T+(1-v/7)*(H-T-B),yt=v=>T+(1-(v-6)/6)*(H-T-B),rts=REAL.map((v,i)=>v*1000/TCANA[i]);
+  let g='<g class="grid">'+[0,2,4,6].map(t=>`<line x1="${L}" x2="${W-Rr}" y1="${y(t)}" y2="${y(t)}"/><text x="${L-6}" y="${y(t)+4}" text-anchor="end">${t}</text>`).join('')+'</g>';
+  [6,8,10,12].forEach(t=>g+=`<text x="${W-Rr+6}" y="${yt(t)+4}" style="fill:var(--prev)">${t}</text>`);
+  REAL.forEach((v,i)=>{const cx=L+i*bw+bw/2,over=v>ORCM[i];
+    g+=`<rect class="pt" x="${cx-bw*.3}" y="${y(v)}" width="${bw*.6}" height="${y(0)-y(v)}" rx="3" style="fill:var(--accent);fill-opacity:${i===n-1?1:.6}"/><text class="val pt" x="${cx}" y="${y(Math.max(v,ORCM[i]))-7}" text-anchor="middle" style="${over?'fill:var(--bad)':''}">${nf(v,1)}</text><text class="pt" x="${cx}" y="${H-6}" text-anchor="middle">${MESES[i]}</text>`;
+    g+=`<line class="pt" x1="${cx-bw*.42}" x2="${cx+bw*.42}" y1="${y(ORCM[i])}" y2="${y(ORCM[i])}" style="stroke:var(--fg)" stroke-width="2.5"/>`});
+  g+=`<path class="pt" d="${rts.map((v,i)=>(i?'L':'M')+(L+i*bw+bw/2)+' '+yt(v)).join(' ')}" fill="none" style="stroke:var(--prev)" stroke-width="2" stroke-dasharray="5 4"/>`;
+  rts.forEach((v,i)=>g+=`<circle class="pt" cx="${L+i*bw+bw/2}" cy="${yt(v)}" r="4" style="fill:var(--prev)"/>`);
+  REAL.forEach((v,i)=>g+=`<rect class="hit" data-tip="${MESES[i]}/26|Realizado: R$ ${nf(v,2)} mi|Orçado: R$ ${nf(ORCM[i],2)} mi|Variação: ${nf((v/ORCM[i]-1)*100,1)}%|Cana moída: ${nf(TCANA[i])} mil t|Custo: R$ ${nf(rts[i],2)}/t" x="${L+i*bw}" y="${T}" width="${bw}" height="${H-T-B}"/>`);
+  el.innerHTML=svg(W,H,g,'Evolução do custo');
+}
+function chartNat(el){const tot=OF.reduce((a,o)=>a+o.custo,0);donut(el,NAT.map((n,k)=>{const v=OF.reduce((a,o)=>a+o.custo*o.nat[k],0);return{n,v,c:NATC[k],lv:brl(v)}}),brl(tot).replace('R$ ',''),'out/26')}
+function renderExec(){
+  const tot=OF.reduce((a,o)=>a+o.custo,0),orc=OF.reduce((a,o)=>a+o.orc,0),acR=REAL.reduce((a,b)=>a+b,0),acO=ORCM.reduce((a,b)=>a+b,0);
+  const rt=tot/(TCANA[6]*1000),rtA=REAL[5]*1e6/(TCANA[5]*1000),hm=TIPOS.reduce((a,t)=>a+t.qtd*t.hm,0);
+  $('exec4').innerHTML=[
+    {l:'Custo de manutenção · out/26',v:brl(tot).replace('R$ ',''),u:'',m:pv((tot/orc-1)*100)+' orçado '+brl(orc),hl:1,tip:`Custo out/26|Realizado ${brl(tot)}|Orçado ${brl(orc)}`},
+    {l:'Acumulado da safra',v:nf(acR,1),u:' mi',m:pv((acR/acO-1)*100)+' orçado R$ '+nf(acO,1)+' mi',tip:`Safra 26/27 até out|Realizado R$ ${nf(acR,2)} mi|Orçado R$ ${nf(acO,2)} mi`},
+    {l:'Custo por tonelada de cana',v:'R$ '+nf(rt,2),u:'/t',m:`<span class="pill p-${rt<=rtA?'ok':'warn'}">set ${nf(rtA,2)}</span> ${nf(TCANA[6])} mil t moídas`,tip:`R$ por tonelada|Out: R$ ${nf(rt,2)}/t|Set: R$ ${nf(rtA,2)}/t`},
+    {l:'Custo por hora-máquina',v:'R$ '+nf(tot/hm,1),u:'/h',m:nf(hm)+' h trabalhadas',tip:`R$ por hora-máquina|${nf(hm)} horas da frota no mês`}
+  ].map(k=>`<div class="card big${k.hl?' hl':''}" data-tip="${esc(k.tip)}"><div class="l">${k.l}</div><div class="v">${k.v}<small>${k.u}</small></div><div class="m">${k.m}</div></div>`).join('');
+  chartOfCusto($('cOfCusto'));chartMes($('cMes'));chartNat($('cNat'));
+  const rows=[...OF].sort((a,b)=>b.custo-a.custo),all=[];OF.forEach(o=>o.nat.forEach(f=>all.push(o.custo*f)));const mx=Math.max(...all);
+  const cell=(v,o,k)=>`<td class="heat" data-tip="${esc(o.nome+'|'+NAT[k]+': '+brl(v)+'|'+nf(v/o.custo*100,0)+'% do custo da oficina')}" style="background:color-mix(in srgb,var(--accent) ${Math.round(v/mx*70)}%,transparent);${v/mx>.45?'font-weight:700':''}">${v?nf(v/1000):'–'}</td>`;
+  const nt=NAT.map((n,k)=>OF.reduce((a,o)=>a+o.custo*o.nat[k],0));
+  $('tMatriz').innerHTML=`<table><thead><tr><th>Setor / oficina</th><th>Coordenador</th>${NAT.map(n=>`<th class="r">${n}</th>`).join('')}<th class="r">Realizado</th><th class="r">Orçado</th><th class="r">Variação</th><th class="r">% do total</th></tr></thead><tbody>
+  ${rows.map(o=>`<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${o.cor};margin-right:8px;vertical-align:-1px"></span><b>${o.nome}</b></td><td>${o.coord}</td>${o.nat.map((f,k)=>cell(o.custo*f,o,k)).join('')}<td class="r"><b>${nf(o.custo/1000)}</b></td><td class="r">${nf(o.orc/1000)}</td><td class="r">${pv((o.custo/o.orc-1)*100)}</td><td class="r">${nf(o.custo/tot*100,1)}%</td></tr>`).join('')}
+  <tr><td><b>Total</b></td><td></td>${nt.map(v=>`<td class="r"><b>${nf(v/1000)}</b></td>`).join('')}<td class="r"><b>${nf(tot/1000)}</b></td><td class="r">${nf(orc/1000)}</td><td class="r">${pv((tot/orc-1)*100)}</td><td class="r">100%</td></tr></tbody></table>`;
+  const r2=mulberry32(777),cand=[];
+  [['colh',5,62000,98000],['cam',2,28000,46000],['trat',2,22000,36000],['comb',1,24000,30000]].forEach(([tp,n,a,b])=>{const pool=[...FROTA[tp]];for(let i=0;i<n;i++){const e=pool.splice(Math.floor(r2()*pool.length),1)[0];cand.push({...e,custo:Math.round((a+r2()*(b-a))/100)*100,os:3+Math.floor(r2()*7),hp:20+Math.floor(r2()*90),falha:SIST[tp][Math.floor(r2()*SIST[tp].length)],ano:2014+Math.floor(r2()*9)})}});
+  cand.sort((a,b)=>b.custo-a.custo);
+  $('tTop').innerHTML=`<table><thead><tr><th>#</th><th>Frota</th><th>Equipamento</th><th>Modelo</th><th>Ano</th><th>Oficina</th><th>Falha que mais repete</th><th class="r">OS no mês</th><th class="r">Horas paradas</th><th class="r">Custo no mês</th><th>Recomendação</th></tr></thead><tbody>${cand.map((e,i)=>{const rec=e.ano<=2016&&e.custo>60000?['bad','Avaliar troca']:e.os>=7?['warn','Análise de causa raiz']:e.custo>60000?['warn','Reforma na entressafra']:['ok','Acompanhar'];
+    return `<tr><td>${i+1}</td><td><b>${e.frota}</b></td><td>${TM[e.tipo].sing}</td><td>${e.modelo}</td><td>${e.ano}</td><td>${OFM[TM[e.tipo].of].nome}</td><td>${e.falha}</td><td class="r">${e.os}</td><td class="r">${e.hp} h</td><td class="r"><b>${brl(e.custo)}</b></td><td><span class="pill p-${rec[0]}">${rec[1]}</span></td></tr>`}).join('')}</tbody></table>`;
+}
+function renderAlerts(){
+  const A=[];
+  OF.filter(o=>o.custo>o.orc).sort((a,b)=>(b.custo-b.orc)-(a.custo-a.orc)).forEach(o=>A.push({c:'--bad',t:`${o.nome} estourou o orçado em ${brl(o.custo-o.orc)}`,s:`${nf((o.custo/o.orc-1)*100,1)}% acima · ${o.coord}`}));
+  TIPOS.filter(t=>t.dm<t.meta-1).forEach(t=>A.push({c:'--warn',t:`DM de ${t.nome.toLowerCase()} em ${nf(t.dm,1)}%`,s:`meta ${t.meta}% · ${nf(t.meta-t.dm,1)} p.p. abaixo`}));
+  const pk=VEH.filter(v=>v.status==='peca').sort((a,b)=>vHoras(b)-vHoras(a));
+  if(pk.length)A.push({c:'--warn',t:`${pk.length} máquinas paradas aguardando peça`,s:`maior espera: frota ${pk[0].frota} há ${nf(vHoras(pk[0]),0)} h`});
+  OF.filter(o=>o.sem>4).forEach(o=>A.push({c:'--warn',t:`Backlog da ${o.nome} em ${nf(o.sem,1)} semanas`,s:'acima de 4 semanas: avaliar hora extra ou terceiros'}));
+  A.push({c:'--bad',t:'Preventiva em 38% das horas',s:'meta 45% · a corretiva puxa o custo de peças'});
+  A.push({c:'--warn',t:'Absenteísmo da Borracharia em 5,2%',s:'meta 3% · Colhedoras em 4,1%'});
+  $('alerts').innerHTML=A.slice(0,7).map(a=>`<li><i style="background:var(${a.c})"></i><div><b>${a.t}</b><span>${a.s}</span></div></li>`).join('');
+}
+
+/* ---------- pátio: gráficos ---------- */
+function chartDM(el){hbars(el,{W:460,L:170,R:54,min:75,max:100,ticks:[75,80,85,90,95,100],label:'DM por frota',rows:TIPOS.map(t=>({l:t.nome,v:t.dm,m:t.meta,c:sc(t.dm,t.meta),vl:nf(t.dm,1),tip:`${t.nome}|DM: ${nf(t.dm,1)}%|Meta: ${t.meta}%|Desvio: ${t.dm-t.meta>0?'+':''}${nf(t.dm-t.meta,1)} p.p.|${t.qtd} equipamentos`}))})}
+function chartTrend(el){
+  const ser=[['colh','Colhedoras','#4E9A4A'],['cam','Caminhões','#2F7FD8'],['trat','Tratores','#E0892B']].map(([id,n,c])=>{const t=TM[id],r=mulberry32(id.length*977),vals=[];let v=t.dm-2.5;for(let i=0;i<12;i++){v+=(r()-.45)*2.2;v=Math.max(t.dm-6,Math.min(t.dm+3,v));vals.push(v)}vals[11]=t.dm;return{n,c,vals,meta:t.meta}});
+  $('lgTrend').innerHTML=ser.map(s=>`<span><i style="background:${s.c}"></i>${s.n}</span>`).join('');
+  const W=520,H=240,L=34,Rr=14,T=12,B=24,x=i=>L+i*(W-L-Rr)/11,y=v=>T+(100-v)/25*(H-T-B);
+  let g='<g class="grid">'+[75,80,85,90,95,100].map(t=>`<line x1="${L}" x2="${W-Rr}" y1="${y(t)}" y2="${y(t)}"/><text x="${L-6}" y="${y(t)+4}" text-anchor="end">${t}</text>`).join('')+'</g>';
+  for(let i=0;i<12;i++)g+=`<text x="${x(i)}" y="${H-6}" text-anchor="middle">S${31+i}</text>`;
+  ser.forEach(s=>{const d=s.vals.map((v,i)=>(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)).join(' ');g+=`<path class="pt" d="${d}" fill="none" style="stroke:${s.c}" stroke-width="2.5" stroke-linejoin="round"/>`;s.vals.forEach((v,i)=>g+=`<circle class="pt" cx="${x(i)}" cy="${y(v)}" r="${i===11?5:3}" style="fill:${s.c};stroke:var(--panel)" stroke-width="1.5"/>`)});
+  for(let i=0;i<12;i++)g+=`<rect class="hit" data-tip="${esc(`Semana ${31+i}|`+ser.map(s=>`${s.n}: ${nf(s.vals[i],1)}% (meta ${s.meta})`).join('|'))}" x="${x(i)-(W-L-Rr)/22}" y="${T}" width="${(W-L-Rr)/11}" height="${H-T-B}"/>`;
+  el.innerHTML=svg(W,H,g,'Tendência da DM');
+}
+function chartTipo(el){donut(el,[{n:'Corretiva',v:6120,c:'var(--exec)',lv:'6.120 HH'},{n:'Preventiva',v:4560,c:'var(--prev)',lv:'4.560 HH'},{n:'Preditiva',v:1320,c:'#9B5FC0',lv:'1.320 HH'}],'38%','preventiva')}
+
+/* ---------- oficinas ---------- */
+function renderOficinas(el,compact){
+  el.innerHTML=OF.map(o=>{const s=o.sem>4?'bad':o.sem<2?'warn':'ok';
+    return `<div class="card of" style="--c:${o.cor}"><div class="tp"><h3>${o.nome}</h3><span class="pill p-${s}" data-tip="${esc(`Backlog|${nf(o.backlog)} HH na carteira|Capacidade ${nf(o.cap)} HH por semana|${nf(o.sem,1)} semanas`)}">${nf(o.sem,1)} sem</span></div>
+    <p class="coord">Coordenador <b>${o.coord}</b>${compact?'':'<br>'+o.foco}</p>
+    <div class="turnos">${TURNOS.map((t,k)=>`<div class="${k===TI?'now':''}"><b>${o.t[k]||'–'}</b><span>Turno ${t.k}${k===TI?' · agora':''}</span></div>`).join('')}</div>
+    <dl class="mini"><dt>Efetivo total</dt><dd>${o.total}</dd><dt>No pátio agora</dt><dd>${VEH.filter(v=>v.of===o.id&&v.state!=='gone').length}</dd><dt>OS abertas</dt><dd>${OS.filter(x=>x.of===o.id&&x.status!=='Concluída').length}</dd><dt>Backlog</dt><dd>${nf(o.backlog)} HH</dd>${compact?'':`<dt>Apropriação</dt><dd>${o.apr}%</dd><dt>Absenteísmo</dt><dd>${nf(o.abs,1)}%</dd>`}<dt>Sem acidente</dt><dd>${o.dsa} dias</dd><dt>Custo out/26</dt><dd>${brl(o.custo)}</dd></dl></div>`}).join('');
+}
+function chartHead(el){
+  const cs=['#F2B705','#2F7FD8','#9B5FC0'];
+  $('lgHead').innerHTML=TURNOS.map((t,i)=>`<span><i style="background:${cs[i]}"></i>Turno ${t.k} ${t.txt}</span>`).join('');
+  const W=460,L=160,Rr=34,rh=30,H=OF.length*rh+24,x=v=>L+v/40*(W-L-Rr);
+  let g='<g class="grid">'+[0,10,20,30,40].map(t=>`<line x1="${x(t)}" x2="${x(t)}" y1="0" y2="${H-22}"/><text x="${x(t)}" y="${H-6}" text-anchor="middle">${t}</text>`).join('')+'</g>';
+  OF.forEach((o,i)=>{const y=4+i*rh;let acc=0;g+=`<text class="lbl" x="${L-8}" y="${y+14}" text-anchor="end">${o.nome.replace(' · Comboios','')}</text>`;
+    o.t.forEach((v,k)=>{if(v)g+=`<rect class="bar" data-tip="${esc(`${o.nome}|Turno ${TURNOS[k].k} (${TURNOS[k].txt}): ${v} pessoas|Total: ${o.total}`)}" x="${x(acc)}" y="${y+2}" width="${x(acc+v)-x(acc)-1.5}" height="18" rx="2" style="fill:${cs[k]};fill-opacity:${k===TI?1:.45}"/>`;acc+=v});
+    g+=`<text class="val pt" x="${x(acc)+6}" y="${y+15}">${acc}</text>`});
+  el.innerHTML=svg(W,H,g,'Efetivo por turno');
+}
+function chartBacklog(el){hbars(el,{W:460,L:170,R:50,max:5,ticks:[0,1,2,3,4,5],band:[2,4],label:'Backlog',rows:[...OF].sort((a,b)=>b.sem-a.sem).map(o=>({l:o.nome.replace(' · Comboios',''),v:o.sem,c:o.sem>4?'var(--bad)':o.sem<2?'var(--warn)':'var(--ok)',vl:nf(o.sem,1),tip:`${o.nome}|Backlog: ${nf(o.sem,1)} semanas|${nf(o.backlog)} HH na carteira|Capacidade: ${nf(o.cap)} HH/semana`})),note:'Acima de 4 semanas a oficina não dá conta da carteira; abaixo de 2 sobra gente para remanejar.'})}
+
+/* ---------- pessoas ---------- */
+function renderPessoas(){
+  const ef=OF.reduce((a,o)=>a+o.total,0),hhtMes=ef*191,hhtSafra=hhtMes*7,afast=1,dias=12;
+  const TF=afast*1e6/hhtSafra,TG=dias*1e6/hhtSafra,absG=OF.reduce((a,o)=>a+o.abs*o.total,0)/ef,he=OF.reduce((a,o)=>a+o.he,0);
+  const nrT=NRS.reduce((a,n)=>a+n.tot,0),nrOk=NRS.reduce((a,n)=>a+n.ok,0);
+  $('dsa').innerHTML=dsaHTML();
+  const K=[
+    {l:'Taxa de frequência',v:nf(TF,2),u:'',m:'acidentes c/ afast. × 10⁶ ÷ HHT',s:'ok',p:'meta ≤ 5',tip:`Taxa de frequência (NBR 14280)|${afast} acidente com afastamento na safra|HHT da safra: ${nf(hhtSafra)}`},
+    {l:'Taxa de gravidade',v:nf(TG,0),u:'',m:dias+' dias perdidos na safra',s:'ok',p:'meta ≤ 80',tip:`Taxa de gravidade (NBR 14280)|${dias} dias perdidos × 10⁶ ÷ HHT`},
+    {l:'Absenteísmo',v:nf(absG,1),u:'%',m:'meta 3,0%',s:absG<=3?'ok':'warn',p:absG<=3?'na meta':'acima',tip:`Absenteísmo|Média ponderada pelo efetivo|Pior: Borracharia 5,2%`},
+    {l:'Hora extra',v:nf(he),u:'h',m:nf(he/hhtMes*100,1)+'% das horas',s:'warn',p:'alta',tip:`Horas extras no mês|Colhedoras: 612 h|Pesados: 420 h`},
+    {l:'Treinamentos em dia',v:nf(nrOk/nrT*100,0),u:'%',m:(nrT-nrOk)+' capacitações vencidas',s:'warn',p:'meta 95%',tip:`Capacitações por NR|${nrOk} de ${nrT} em dia`},
+    {l:'Efetivo',v:ef,u:'',m:'turnover 1,9% · '+OF.reduce((a,o)=>a+o.ferias,0)+' em férias',s:'ok',p:'HHT '+nf(hhtMes/1000,1)+' mil',tip:`Efetivo da manutenção|${ef} colaboradores em 3 turnos`}
+  ];
+  $('k6').innerHTML=K.map(k=>`<div class="kpi" data-tip="${esc(k.tip)}"><span class="l">${k.l}</span><span class="v">${k.v}<small>${k.u}</small></span><span class="m"><span class="pill p-${k.s}">${k.p}</span>${k.m}</span></div>`).join('');
+  $('tPessoas').innerHTML=`<table><thead><tr><th>Oficina</th><th>Coordenador</th><th class="r">Efetivo</th><th class="r">Turno ${TURNOS[TI].k} agora</th><th class="r">Absenteísmo</th><th class="r">Hora extra</th><th class="r">Banco de horas</th><th class="r">Férias</th><th class="r">Pessoas c/ NR vencida</th><th class="r">Dias sem acidente</th></tr></thead><tbody>${OF.map(o=>`<tr><td><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${o.cor};margin-right:8px;vertical-align:-1px"></span>${o.nome}</td><td>${o.coord}</td><td class="r">${o.total}</td><td class="r">${o.t[TI]||'–'}</td><td class="r"><span class="pill p-${o.abs<=3?'ok':o.abs<=4?'warn':'bad'}">${nf(o.abs,1)}%</span></td><td class="r">${nf(o.he)} h</td><td class="r">${nf(o.bh)} h</td><td class="r">${o.ferias}</td><td class="r">${o.tvenc?`<span class="pill p-${o.tvenc>=3?'bad':'warn'}">${o.tvenc}</span>`:'0'}</td><td class="r"><b style="color:var(${o.dsa<30?'--bad':o.dsa<90?'--warn':'--ok'})">${o.dsa}</b></td></tr>`).join('')}</tbody></table>`;
+  chartAbs($('cAbs'));
+  const hA=Math.round(OF.reduce((a,o)=>a+o.abs/100*o.total*191,0));
+  donut($('cAbsMot'),[{n:'Atestado médico',v:58,c:'var(--prev)'},{n:'Falta sem justificativa',v:17,c:'var(--bad)'},{n:'Licenças legais',v:15,c:'#9B5FC0'},{n:'Atrasos e saídas',v:10,c:'var(--warn)'}].map(p=>({...p,lv:nf(hA*p.v/100)+' h'})),nf(hA)+' h','ausentes');
+  {const W=460,H=230,L=36,Rr=16,T=16,B=24,n=ABSM.length,x=i=>L+i*(W-L-Rr)/(n-1),y=v=>T+(1-(v-2)/3)*(H-T-B);
+   let g='<g class="grid">'+[2,3,4,5].map(t=>`<line x1="${L}" x2="${W-Rr}" y1="${y(t)}" y2="${y(t)}"/><text x="${L-6}" y="${y(t)+4}" text-anchor="end">${t}%</text>`).join('')+'</g>';
+   g+=`<line class="pt" x1="${L}" x2="${W-Rr}" y1="${y(3)}" y2="${y(3)}" style="stroke:var(--ok)" stroke-width="2" stroke-dasharray="5 4"/><text class="pt" x="${L+4}" y="${y(3)+15}" style="fill:var(--ok)">meta 3%</text>`;
+   const d=ABSM.map((v,i)=>(i?'L':'M')+x(i)+' '+y(v)).join(' ');
+   g+=`<path class="pt" d="${d} L${x(n-1)} ${y(2)} L${x(0)} ${y(2)} Z" style="fill:var(--warn);fill-opacity:.1"/><path class="pt" d="${d}" fill="none" style="stroke:var(--warn)" stroke-width="2.5"/>`;
+   ABSM.forEach((v,i)=>g+=`<circle class="pt" cx="${x(i)}" cy="${y(v)}" r="4.5" style="fill:var(--warn);stroke:var(--panel)" stroke-width="2"/><text class="val pt" x="${x(i)}" y="${y(v)-10}" text-anchor="middle">${nf(v,1)}</text><text class="pt" x="${x(i)}" y="${H-6}" text-anchor="middle">${MESES[i]}</text><rect class="hit" data-tip="${MESES[i]}/26|Absenteísmo: ${nf(v,1)}%|Meta: 3,0%|${v>3?'Acima':'Dentro'} da meta" x="${x(i)-(W-L-Rr)/(2*(n-1))}" y="${T}" width="${(W-L-Rr)/(n-1)}" height="${H-T-B}"/>`);
+   $('cAbsMes').innerHTML=svg(W,H,g,'Absenteísmo mensal')}
+  chartBird($('cBird'));
+  $('tNR').innerHTML=`<table><thead><tr><th>Norma</th><th>Público</th><th class="r">Em dia</th><th class="r">Vence 30 d</th><th class="r">Vencidas</th></tr></thead><tbody>${NRS.map(n=>{const v=n.tot-n.ok;return `<tr><td><b>${n.nr}</b> · ${n.nome}</td><td>${n.pub}</td><td class="r">${nf(n.ok/n.tot*100,0)}%</td><td class="r">${n.v30}</td><td class="r">${v?`<span class="pill p-${v/n.tot>.1?'bad':'warn'}">${v}</span>`:'0'}</td></tr>`}).join('')}</tbody></table><p class="note">Colaborador com NR vencida não pode executar a atividade. Prioridade: NR-10 da elétrica, com 4 de 15 vencidas.</p>`;
+  const tc={'Com afastamento':'bad','Sem afastamento':'warn','Quase-acidente':'ok'};
+  $('tOcor').innerHTML=`<table><thead><tr><th>Data</th><th>Oficina</th><th>Classificação</th><th>O que aconteceu</th><th>Ação tomada</th></tr></thead><tbody>${OCOR.map(o=>`<tr><td>${o.d}</td><td>${OFM[o.of].nome}</td><td><span class="pill p-${tc[o.tipo]}">${o.tipo}</span></td><td>${o.desc}</td><td>${o.acao}</td></tr>`).join('')}</tbody></table>`;
+}
+function dsaHTML(){return `<span class="l">Dias sem acidente com afastamento</span><span class="n">${SAFE.dsaCA}<small>dias</small></span><span class="m">Recorde da manutenção: <b>${SAFE.rec} dias</b> · sem nenhum tipo de acidente: <b>${SAFE.dsaAny} dias</b><br>Último: prensamento de dedo na troca de faca do picador (Colhedoras)</span>`}
+function chartAbs(el,W){hbars(el,{W:W||460,L:150,R:44,max:6,ticks:[0,1,2,3,4,5,6],line:3,label:'Absenteísmo',rows:[...OF].sort((a,b)=>b.abs-a.abs).map(o=>({l:o.nome.replace(' · Comboios',''),v:o.abs,c:o.abs<=3?'var(--ok)':o.abs<=4?'var(--warn)':'var(--bad)',vl:nf(o.abs,1)+'%',tip:`${o.nome}|Absenteísmo: ${nf(o.abs,1)}%|Meta: 3%|≈ ${nf(o.abs/100*o.total*191,0)} h ausentes no mês|Efetivo: ${o.total}`}))})}
+function chartBird(el){
+  const lv=[['Acidente com afastamento','var(--bad)'],['Acidente sem afastamento','var(--exec)'],['Primeiros socorros','var(--warn)'],['Quase-acidentes','var(--accent)'],['Desvios e condições inseguras','var(--dim)']];
+  const W=560,H=270,cx=170,T=6,lh=52,mw=320;let g='';
+  lv.forEach((l,i)=>{const y=T+i*lh,w1=mw*i/5+30,w2=mw*(i+1)/5+30,tip=`${l[0]}|${BIRD[i]} registros na safra|${i?'1 : '+nf(BIRD[i]/BIRD[0],0)+' em relação ao topo':'Topo da pirâmide'}`;
+    g+=`<path class="arc" data-tip="${esc(tip)}" d="M${cx-w1/2} ${y} L${cx+w1/2} ${y} L${cx+w2/2} ${y+lh-5} L${cx-w2/2} ${y+lh-5} Z" style="fill:${l[1]}"/><text class="pt" x="${cx}" y="${y+lh/2+5}" text-anchor="middle" style="font:700 22px var(--display);fill:${i===4?'var(--fg)':'#fff'}">${BIRD[i]}</text><line class="pt" x1="${cx+w2/2+6}" x2="352" y1="${y+lh/2}" y2="${y+lh/2}" style="stroke:var(--line)"/><text class="lbl pt" x="360" y="${y+lh/2+4}">${l[0]}</text>`});
+  el.innerHTML=svg(W,H,g,'Pirâmide de Bird')+`<p class="note">Para cada acidente com afastamento, a equipe registrou ${BIRD[4]} desvios e ${BIRD[3]} quase-acidentes. Relatar muito na base é o que derruba o topo.</p>`;
+}
+
+/* ---------- análise ---------- */
+function chartPareto(el){
+  const tot=PARETO.reduce((a,p)=>a+p[1],0);let acc=0;const d=PARETO.map(([n,v])=>{acc+=v;return{n,v,c:acc/tot*100}});
+  const W=1100,H=340,L=46,Rr=52,T=26,B=78,n=d.length,bw=(W-L-Rr)/n,y=v=>T+(1-v/450)*(H-T-B),yp=p=>T+(1-p/100)*(H-T-B),cut=d.findIndex(p=>p.c>=80);
+  let g='<g class="grid">'+[0,100,200,300,400].map(t=>`<line x1="${L}" x2="${W-Rr}" y1="${y(t)}" y2="${y(t)}"/><text x="${L-6}" y="${y(t)+4}" text-anchor="end">${t}</text>`).join('')+'</g>';
+  [0,20,40,60,80,100].forEach(p=>g+=`<text x="${W-Rr+6}" y="${yp(p)+4}">${p}%</text>`);
+  g+=`<line class="pt" x1="${L}" x2="${W-Rr}" y1="${yp(80)}" y2="${yp(80)}" style="stroke:var(--warn)" stroke-dasharray="6 4" stroke-width="1.5"/><text class="pt" x="${L+6}" y="${yp(80)-6}" style="fill:var(--warn)">80%</text>`;
+  d.forEach((p,i)=>{const bx=L+i*bw+bw*.15,w=bw*.7,a=i<=cut,tip=`${p.n}|${p.v} horas paradas|${nf(p.v/tot*100,1)}% do total|Acumulado: ${nf(p.c,1)}%`;
+    g+=`<rect class="bar" data-tip="${esc(tip)}" x="${bx}" y="${y(p.v)}" width="${w}" height="${y(0)-y(p.v)}" rx="4" style="fill:${a?'var(--accent)':'var(--dim)'}"/><text class="val pt" x="${bx+w/2}" y="${y(p.v)-7}" text-anchor="middle">${p.v}</text><text class="lbl pt" transform="translate(${bx+w/2},${H-B+16}) rotate(-32)" text-anchor="end">${p.n}</text>`});
+  g+=`<path class="pt" d="${d.map((p,i)=>(i?'L':'M')+(L+i*bw+bw/2).toFixed(1)+' '+yp(p.c).toFixed(1)).join(' ')}" fill="none" style="stroke:var(--fg)" stroke-width="2.2"/>`;
+  d.forEach((p,i)=>g+=`<circle data-tip="${esc(`${p.n}|Acumulado: ${nf(p.c,1)}%`)}" cx="${L+i*bw+bw/2}" cy="${yp(p.c)}" r="5" style="fill:var(--fg);stroke:var(--panel)" stroke-width="2"/>`);
+  g+=`<text x="${L}" y="12">horas paradas</text><text x="${W-Rr+6}" y="12">acum.</text>`;
+  el.innerHTML=`<div style="overflow-x:auto">${svg(W,H,g,'Pareto').replace('<svg','<svg style="min-width:680px"')}</div><p class="note">${cut+1} de ${n} sistemas explicam ${nf(d[cut].c,0)}% das ${nf(tot)} horas paradas. Atacar hidráulico, motor e esteira primeiro.</p>`;
+}
+function chartABC(el){
+  const tot=PECAS.reduce((a,p)=>a+p[1],0);let acc=0;const d=PECAS.map(([n,v],i)=>{acc+=v;const c=acc/tot*100;return{n,v,c,cls:c<=80.5?'A':c<=95.5?'B':'C',ip:(i+1)/PECAS.length*100}});
+  const W=460,H=270,L=42,Rr=14,T=12,B=30,x=p=>L+p/100*(W-L-Rr),y=p=>T+(1-p/100)*(H-T-B),lA=d.filter(p=>p.cls==='A').pop(),lB=d.filter(p=>p.cls==='B').pop();
+  let g=`<rect x="${x(0)}" y="${T}" width="${x(lA.ip)-x(0)}" height="${H-T-B}" style="fill:var(--bad);fill-opacity:.08"/><rect x="${x(lA.ip)}" y="${T}" width="${x(lB.ip)-x(lA.ip)}" height="${H-T-B}" style="fill:var(--warn);fill-opacity:.1"/>`;
+  g+='<g class="grid">'+[0,20,40,60,80,100].map(t=>`<line x1="${L}" x2="${W-Rr}" y1="${y(t)}" y2="${y(t)}"/><text x="${L-6}" y="${y(t)+4}" text-anchor="end">${t}%</text>`).join('')+'</g>';
+  [0,25,50,75,100].forEach(t=>g+=`<text x="${x(t)}" y="${H-10}" text-anchor="middle">${t}%</text>`);
+  [['A',(x(0)+x(lA.ip))/2,'var(--bad)'],['B',(x(lA.ip)+x(lB.ip))/2,'var(--warn)'],['C',(x(lB.ip)+x(100))/2,'var(--muted)']].forEach(([k,xx,c])=>g+=`<text class="pt" x="${xx}" y="${H-B-10}" text-anchor="middle" style="font:700 20px var(--display);fill:${c}">${k}</text>`);
+  g+=`<path class="pt" d="M${x(0)} ${y(0)} ${d.map(p=>'L'+x(p.ip).toFixed(1)+' '+y(p.c).toFixed(1)).join(' ')}" fill="none" style="stroke:var(--fg)" stroke-width="2.2"/>`;
+  const cc={A:'var(--bad)',B:'var(--warn)',C:'var(--dim)'};
+  d.forEach(p=>g+=`<circle data-tip="${esc(`${p.n}|Consumo: ${brl(p.v)}|Acumulado: ${nf(p.c,1)}%|Classe ${p.cls}`)}" cx="${x(p.ip)}" cy="${y(p.c)}" r="5.5" style="fill:${cc[p.cls]};stroke:var(--panel)" stroke-width="2"/>`);
+  el.innerHTML=svg(W,H,g,'Curva ABC')+`<p class="note">${d.filter(p=>p.cls==='A').length} itens (${nf(lA.ip,0)}% do mix) somam ${nf(lA.c,0)}% do gasto: pedem contrato, estoque mínimo e acompanhamento semanal.</p>`;
+  $('tABC').innerHTML=`<table><thead><tr><th>Item</th><th class="r">Consumo</th><th class="r">Acum.</th><th>Classe</th></tr></thead><tbody>${d.map(p=>`<tr><td>${p.n}</td><td class="r">${brl(p.v)}</td><td class="r">${nf(p.c,1)}%</td><td><span class="abc abc-${p.cls}">${p.cls}</span></td></tr>`).join('')}</tbody></table>`;
+}
+
+/* ---------- frota ---------- */
+function renderFrota(){
+  $('tFrota').innerHTML=`<table><thead><tr><th>Frota</th><th>Oficina</th><th class="r">Qtde</th><th class="r">DM</th><th class="r">Meta</th><th class="r">Desvio</th><th class="r">MTBF</th><th class="r">MTTR</th><th class="r">No pátio</th><th class="r">Custo out/26</th><th class="r">Por equip.</th></tr></thead><tbody>${TIPOS.map(t=>{const dv=t.dm-t.meta,s=dv>=0?'ok':dv>=-3?'warn':'bad';return `<tr><td><b>${t.nome}</b></td><td>${OFM[t.of].nome}</td><td class="r">${t.qtd}</td><td class="r">${nf(t.dm,1)}%</td><td class="r">${t.meta}%</td><td class="r"><span class="pill p-${s}">${dv>0?'+':''}${nf(dv,1)}</span></td><td class="r">${t.mtbf} h</td><td class="r">${nf(t.mttr,1)} h</td><td class="r" data-live="patio-${t.id}">${VEH.filter(v=>v.tipo===t.id).length}</td><td class="r">${brl(t.custo)}</td><td class="r">${brl(t.custo/t.qtd)}</td></tr>`}).join('')}</tbody></table>`;
+  hbars($('cCusto'),{W:460,L:170,R:80,max:3e6,ticks:[0,1e6,2e6,3e6],tf:t=>t?t/1e6+' mi':'0',label:'Custo por frota',rows:[...TIPOS].sort((a,b)=>b.custo-a.custo).map(t=>({l:t.nome,v:t.custo,c:'var(--accent)',vl:brl(t.custo),tip:`${t.nome}|Custo: ${brl(t.custo)}|Por equipamento: ${brl(t.custo/t.qtd)}|R$ ${nf(t.custo/(t.qtd*t.hm),1)} por hora trabalhada`}))});
+  const W=460,H=270,L=46,Rr=16,T=14,B=34,x=v=>L+Math.log10(v/30)/Math.log10(500/30)*(W-L-Rr),y=v=>T+(1-(v-2)/6)*(H-T-B);
+  let g='<g class="grid">'+[30,60,120,250,500].map(t=>`<line x1="${x(t)}" x2="${x(t)}" y1="${T}" y2="${H-B}"/><text x="${x(t)}" y="${H-B+16}" text-anchor="middle">${t} h</text>`).join('')+[2,4,6,8].map(t=>`<line x1="${L}" x2="${W-Rr}" y1="${y(t)}" y2="${y(t)}"/><text x="${L-6}" y="${y(t)+4}" text-anchor="end">${t} h</text>`).join('')+'</g>';
+  g+=`<text x="${(L+W-Rr)/2}" y="${H-4}" text-anchor="middle">MTBF (escala log)</text><text x="4" y="${T+4}">MTTR</text>`;
+  TIPOS.forEach(t=>{const r=5+Math.sqrt(t.qtd)*1.4,c=OFM[t.of].cor;g+=`<circle class="arc" data-tip="${esc(`${t.nome}|MTBF: ${t.mtbf} h|MTTR: ${nf(t.mttr,1)} h|${t.qtd} equipamentos`)}" cx="${x(t.mtbf)}" cy="${y(t.mttr)}" r="${r}" style="fill:${c};fill-opacity:.4;stroke:${c}" stroke-width="2"/><text class="lbl pt" x="${x(t.mtbf)}" y="${y(t.mttr)-r-5}" text-anchor="middle">${t.nome.split(' ')[0]}</text>`});
+  $('cScatter').innerHTML=svg(W,H,g,'MTBF por MTTR');
+}
+
+/* ================= simulação ================= */
+const SIM={t:Date.now(),speed:60,playing:true,next:0,lastSample:0,day:new Date().getDate()};
+const turnoIdx=ms=>{const d=new Date(ms),m=d.getHours()*60+d.getMinutes();return m>=420&&m<920?0:m>=920&&m<1420?1:2};
+let TI=turnoIdx(SIM.t);
+
+/* baias */
+const BAYS=[
+ {of:'colh',row:0,start:0,tipos:['colh','colh','colh','colh']},
+ {of:'pesada',row:0,start:4,tipos:['cam','cam','apoio','cam']},
+ {of:'agri',row:0,start:8,tipos:['trat','trat','trat','trat']},
+ {of:'leve',row:1,start:0,tipos:['leve','leve','leve']},
+ {of:'eletr',row:1,start:3,tipos:['leve','trat','cam']},
+ {of:'borr',row:1,start:6,tipos:['cam','trat']},
+ {of:'solda',row:1,start:8,tipos:['colh','trat']},
+ {of:'volante',row:1,start:10,tipos:['comb','comb']}
+];
+const SLOTS=[];BAYS.forEach(b=>b.tipos.forEach((tp,i)=>SLOTS.push({of:b.of,row:b.row,slot:b.start+i,tipo:tp,veh:null})));
+const STATUS={exec:{nome:'Em execução',v:'--exec'},peca:{nome:'Aguardando peça',v:'--peca'},prev:{nome:'Preventiva',v:'--prev'},lib:{nome:'Aguard. liberação',v:'--lib'}};
+const stOS={exec:'Em execução',peca:'Aguard. peça',prev:'Em execução',lib:'Aguard. liberação'};
+const VEH=[],OS=[],FEED=[];
+const usedF=new Set();let osSeq=26110412;
+function takeAsset(tp){const pool=FROTA[tp].filter(a=>!usedF.has(a.frota));const a=(pool.length?pool:FROTA[tp])[Math.floor(Math.random()*(pool.length||FROTA[tp].length))];usedF.add(a.frota);return a}
+const vHoras=v=>v.h0+Math.max(0,(SIM.t-v.since)/3.6e6);
+function newVehicle(slot,st,h0){
+  const a=takeAsset(slot.tipo),sist=st==='prev'?'Preventiva '+rpick(['250 h','500 h','1.000 h']):rpick(SIST[slot.tipo]);
+  const v={...a,of:slot.of,row:slot.row,slot:slot.slot,slotRef:slot,status:st,since:SIM.t,h0:h0||0,sistema:sist,mec:rpick(MEC)+' e '+rpick(MEC),os:String(osSeq++),
+    prev:st==='peca'?rpick(['amanhã 10:00','sáb 07:00','em cotação']):rpick(['hoje 16:00','hoje 18:40','hoje 22:00','amanhã 07:30']),pecas:(st==='peca'?rint(6,58):rint(2,24))*500,state:'parked'};
+  slot.veh=v;VEH.push(v);
+  OS.unshift({os:v.os,frota:v.frota,tipoF:v.tipo,of:v.of,tipo:st==='prev'?'Preventiva':'Corretiva',sistema:sist,status:stOS[st],abert:0,veh:v,hh:rint(4,30),pecas:v.pecas,local:'Oficina central',t:SIM.t});
+  return v;
+}
+/* estado inicial */
+const stCycle=['exec','peca','exec','prev','lib','exec','peca','prev','exec','lib'];
+const EMPTY=new Set([2,14,20]);
+SLOTS.forEach((s,i)=>{if(EMPTY.has(i))return;const st=s.of==='volante'&&s.slot===11?'prev':stCycle[(i*3+1)%stCycle.length];newVehicle(s,st,st==='peca'?rint(18,96):rint(2,28))});
+for(let i=0;i<5;i++){const tp=pick(['colh','trat','cam']);const a=takeAsset(tp);OS.push({os:String(osSeq++),frota:a.frota,tipoF:tp,of:'volante',tipo:'Corretiva',sistema:pick(SIST[tp]),status:'Em campo',abert:rint(1,6),hh:rint(2,8),pecas:rint(1,12)*400,local:pick(FRENTES),t:SIM.t-rint(1,5)*3.6e6})}
+for(let i=0;i<44;i++){const tp=pick(['colh','colh','cam','cam','trat','trat','leve','transb','apoio','comb']);const a=pick(FROTA[tp]);OS.push({os:String(26110000+rint(10,380)),frota:a.frota,tipoF:tp,of:R()<.2?pick(['eletr','borr','solda']):TM[tp].of,tipo:pick(['Corretiva','Corretiva','Preventiva','Preventiva','Preditiva','Melhoria']),sistema:pick(SIST[tp]),status:'Concluída',abert:rint(2,40),hh:rint(2,28),pecas:rint(1,40)*450,local:'Oficina central',t:0})}
+
+function calcOF(){OF.forEach(o=>{o.total=o.t.reduce((a,b)=>a+b,0);o.cap=o.total*44*.82;o.backlog=o.extra+OS.filter(x=>x.of===o.id&&x.status!=='Concluída').reduce((a,x)=>a+x.hh,0);o.sem=o.backlog/o.cap})}
+calcOF();
+
+/* gasto do dia */
+const RATE_H=5716000/31/24;
+function hoursOfDay(ms){const d=new Date(ms);return d.getHours()+d.getMinutes()/60}
+let gastoHoje=hoursOfDay(SIM.t)*RATE_H;
+const HIST={disp:[],os:[],gasto:[]};
+const dispNow=()=>{const par=VEH.filter(v=>v.state!=='gone').length+OS.filter(o=>o.status==='Em campo').length;return (1-par/FROTA_TOTAL)*100};
+const osAbertas=()=>OS.filter(o=>o.status!=='Concluída').length;
+(function seedHist(){const r=mulberry32(5);let d=dispNow(),o=osAbertas(),g=0;for(let i=0;i<24;i++){HIST.disp.push(d+Math.sin(i/4)*.5+(r()-.5)*.3);HIST.os.push(Math.round(o+Math.sin(i/3)*2));HIST.gasto.push(g);g+=RATE_H/2*(0.8+r()*.4)}HIST.gasto=HIST.gasto.map(v=>v/HIST.gasto[23]*gastoHoje||0)})();
+
+/* feed */
+function feed(txt,cor,kind){FEED.unshift({t:SIM.t,txt,cor:cor||'var(--muted)',kind});if(FEED.length>60)FEED.pop();feedDirty=true}
+let feedDirty=true,listDirty=true,osDirty=true;
+
+/* eventos */
+function freeSlots(){return SLOTS.filter(s=>!s.veh)}
+function evArrival(){
+  const fs=freeSlots();if(!fs.length)return false;const s=rpick(fs);const st=Math.random()<.25?'prev':Math.random()<.3?'peca':'exec';
+  const v=newVehicle(s,st,0);v.state='arriving';OS[0].t=SIM.t;
+  feed(`<b>${v.frota}</b> deu entrada na ${OFM[v.of].nome} · OS ${v.os} · ${v.sistema}`,'var(--prev)','in');
+  if(window.P3D)P3D.add(v,true);else v.state='parked';
+  listDirty=osDirty=true;return true;
+}
+function evProgress(){
+  const c=VEH.filter(v=>v.state==='parked');if(!c.length)return false;
+  const w=c.map(v=>({peca:.7,exec:1,prev:1.1,lib:1.6}[v.status]*(1+vHoras(v)/24)));let r=Math.random()*w.reduce((a,b)=>a+b,0),v=c[0];for(let i=0;i<c.length;i++){r-=w[i];if(r<=0){v=c[i];break}}
+  const o=OS.find(x=>x.veh===v);
+  if(v.status==='peca'){v.status='exec';feed(`Peça chegou para a <b>${v.frota}</b>: ${PECA_DE[v.sistema]||'componente'} · serviço retomado`,'var(--exec)')}
+  else if(v.status==='exec'){v.status='lib';feed(`<b>${v.frota}</b>: ${v.sistema.toLowerCase()} concluído, em teste de liberação`,'var(--lib)')}
+  else if(v.status==='prev'){v.status='lib';feed(`Preventiva da <b>${v.frota}</b> concluída (${v.sistema.replace('Preventiva ','')})`,'var(--prev)')}
+  else{depart(v,o);return true}
+  if(o)o.status=stOS[v.status];
+  if(window.P3D)P3D.status(v);
+  if(Math.random()<.15&&v.status==='exec'){v.status='peca';if(o)o.status=stOS.peca;feed(`<b>${v.frota}</b>: desmontagem achou ${PECA_DE[v.sistema]||'peça'} danificada · aguardando compra`,'var(--peca)');if(window.P3D)P3D.status(v)}
+  listDirty=osDirty=true;return true;
+}
+function depart(v,o){
+  const h=vHoras(v);v.state='leaving';v.slotRef.veh=null;
+  if(o){o.status='Concluída';o.abert=Math.round(h);}
+  gastoHoje+=v.pecas;TIPOS.forEach(t=>{if(t.id===v.tipo)t.dm=Math.min(t.meta+4,t.dm+.05)});
+  feed(`<b>${v.frota}</b> liberada para operação após ${nf(h,0)} h · ${brl(v.pecas)} em peças`,'var(--ok)','out');
+  if(window.P3D)P3D.remove(v);else finishLeave(v);
+  listDirty=osDirty=true;
+}
+function finishLeave(v){v.state='gone';const i=VEH.indexOf(v);if(i>=0)VEH.splice(i,1);usedF.delete(v.frota);listDirty=true}
+function evCampo(){
+  const open=OS.filter(o=>o.status==='Em campo');
+  if(open.length>3&&Math.random()<.6){const o=rpick(open);o.status='Concluída';o.abert=Math.max(1,Math.round((SIM.t-o.t)/3.6e6));gastoHoje+=o.pecas;feed(`Oficina volante resolveu ${o.sistema.toLowerCase()} da <b>${o.frota}</b> no campo em ${o.abert} h`,'var(--ok)')}
+  else{const tp=rpick(['colh','colh','trat','cam']),a=takeAsset(tp),s=rpick(SIST[tp]),fr=rpick(FRENTES);OS.unshift({os:String(osSeq++),frota:a.frota,tipoF:tp,of:'volante',tipo:'Corretiva',sistema:s,status:'Em campo',abert:0,hh:rint(2,8),pecas:rint(1,12)*400,local:fr,t:SIM.t});feed(`Chamado de campo: ${TM[tp].sing.toLowerCase()} <b>${a.frota}</b> na ${fr} · ${s.toLowerCase()} · volante a caminho`,'var(--warn)');if(window.P3D)P3D.dispatch()}
+  osDirty=true;return true;
+}
+function evSafety(){
+  const r=Math.random();
+  if(r<.45){BIRD[4]++;feed(`Desvio registrado na ${rpick(OF).nome}: ${rpick(['ferramenta no corredor','mangueira sem proteção','EPI incompleto na área','óleo no piso do box'])} · corrigido`,'var(--dim)')}
+  else if(r<.75){BIRD[3]++;feed(`Quase-acidente relatado na ${rpick(OF).nome}: ${rpick(['macaco cedeu sem carga','peça escorregou da talha','faísca perto do tambor de óleo'])}`,'var(--accent)')}
+  else feed(`DDS do turno ${TURNOS[TI].k}: ${rpick(['bloqueio e etiquetagem','trabalho em altura na colhedora','uso de calço','postura no manuseio de pneus'])}`,'var(--prev)');
+  safeDirty=true;return true;
+}
+let safeDirty=false;
+function fireEvent(){
+  const free=freeSlots().length,parked=VEH.filter(v=>v.state==='parked').length;
+  const opts=[[evArrival,free?1.2+free*.4:0],[evProgress,parked?2.2:0],[evCampo,.9],[evSafety,.45]];
+  let r=Math.random()*opts.reduce((a,o)=>a+o[1],0);for(const[f,w]of opts){r-=w;if(r<=0){f();return}}
+}
+const expo=m=>-Math.log(1-Math.random())*m;
+SIM.next=SIM.t+expo(8)*6e4;
+
+function stepSim(dtReal){
+  if(!SIM.playing)return;
+  const prev=SIM.t;SIM.t+=dtReal*1000*SIM.speed;
+  gastoHoje+=RATE_H*(SIM.t-prev)/3.6e6;
+  let n=0;while(SIM.t>=SIM.next&&n<6){fireEvent();SIM.next+=expo(8)*6e4;n++}
+  if(SIM.t>SIM.next)SIM.next=SIM.t+expo(8)*6e4;
+  const ti=turnoIdx(SIM.t);if(ti!==TI){TI=ti;const tot=OF.reduce((a,o)=>a+o.t[ti],0);feed(`Troca de turno: entra o turno ${TURNOS[ti].k} (${TURNOS[ti].txt}) com ${tot} colaboradores`,'var(--fg)');ofDirty=true}
+  const day=new Date(SIM.t).getDate();if(day!==SIM.day){SIM.day=day;SAFE.dsaCA++;SAFE.dsaAny++;OF.forEach(o=>o.dsa++);gastoHoje=hoursOfDay(SIM.t)*RATE_H;feed(`Virada do dia: <b>${SAFE.dsaCA} dias</b> sem acidente com afastamento`,'var(--accent)');safeDirty=ofDirty=true}
+  if(SIM.t-SIM.lastSample>20*6e4){SIM.lastSample=SIM.t;HIST.disp.push(dispNow());HIST.os.push(osAbertas());HIST.gasto.push(gastoHoje);['disp','os','gasto'].forEach(k=>{if(HIST[k].length>30)HIST[k].shift()})}
+}
+let ofDirty=false;
+
+/* ================= KPIs globais ================= */
+const STATIC_SP={dm:[90.8,91.2,90.6,91.5,91.9,91.4,92.0,92.2,91.8,92.1,92.6,92.4],mtbf:[141,146,150,149,153,155,158,160,163],mttr:[5.2,5.0,4.9,4.8,4.7,4.6,4.5,4.5,4.4],prev:[31,33,34,33,35,36,37,38]};
+function wavg(f){return TIPOS.reduce((a,t)=>a+t[f]*t.qtd,0)/FROTA_TOTAL}
+function kpiList(){
+  const dn=dispNow(),dm=wavg('dm'),meta=wavg('meta'),mt=wavg('mttr'),pk=VEH.filter(v=>v.status==='peca').length,oa=osAbertas();
+  return [
+    {id:'disp',l:'Disponível agora',live:1,v:nf(dn,1),u:'%',m:`<span class="pill p-${dn>=meta?'ok':'warn'}">${FROTA_TOTAL-Math.round(FROTA_TOTAL*(1-dn/100))} de ${FROTA_TOTAL}</span>operando`,sp:HIST.disp,c:'var(--ok)',tip:`Disponível agora|${nf(dn,1)}% da frota operando|Parados na oficina: ${VEH.filter(v=>v.state!=='gone').length}|Parados no campo: ${OS.filter(o=>o.status==='Em campo').length}`},
+    {id:'dm',l:'DM do mês',v:nf(dm,1),u:'%',m:`<span class="pill p-${dm>=meta?'ok':'warn'}">${dm>=meta?'na meta':'abaixo'}</span>meta ${nf(meta,1)}%`,sp:STATIC_SP.dm,c:'var(--prev)',tip:`Disponibilidade mecânica|Média ponderada da frota|Meta ${nf(meta,1)}%`},
+    {id:'mtbf',l:'MTBF',v:nf(wavg('mtbf'),0),u:'h',m:'<span class="pill p-ok">+6% mês</span>entre falhas',sp:STATIC_SP.mtbf,c:'var(--prev)',tip:'MTBF|Tempo médio entre falhas|Subindo há 9 semanas'},
+    {id:'mttr',l:'MTTR',v:nf(mt,1),u:'h',m:`<span class="pill p-${mt<=4.5?'ok':'warn'}">meta 4,5 h</span>para reparar`,sp:STATIC_SP.mttr,c:'var(--exec)',tip:'MTTR|Tempo médio para reparo|Caindo desde o início da safra'},
+    {id:'os',sh:'OS',l:'OS abertas',live:1,v:oa,u:'',m:`<span class="pill p-${pk>4?'bad':'warn'}">${pk} aguard. peça</span>`,sp:HIST.os,c:'var(--warn)',tip:`Ordens abertas|Na oficina: ${VEH.filter(v=>v.state!=='gone').length}|No campo: ${OS.filter(o=>o.status==='Em campo').length}|Aguardando peça: ${pk}`},
+    {id:'prev',l:'Preventiva',v:'38',u:'%',m:'<span class="pill p-bad">−7 p.p.</span>meta ≥ 45%',sp:STATIC_SP.prev,c:'var(--prev)',tip:'Preventiva|38% das horas-homem do mês|Meta: 45%'},
+    {id:'gasto',l:'Gasto hoje',live:1,v:brl(gastoHoje).replace('R$ ',''),u:'',m:`ritmo ${brl(RATE_H*24)}/dia`,sp:HIST.gasto,c:'var(--accent)',tip:`Gasto de manutenção hoje|${brl(gastoHoje)} até ${hhmm(SIM.t)}|Inclui peças das OS encerradas`}
+  ];
+}
+const kpiPrev={};
+function renderKPIs(){
+  const L=kpiList();const el=$('kpis');
+  if(!el.children.length)el.innerHTML=L.map(k=>`<div class="kpi" id="k-${k.id}"></div>`).join('');
+  L.forEach(k=>{const c=$('k-'+k.id);c.setAttribute('data-tip',k.tip);c.innerHTML=`<span class="l">${k.live?'<i class="ld"></i>':''}${k.l}</span><span class="v">${k.v}<small>${k.u}</small></span><span class="m">${k.m}</span>${spark(k.sp,k.c)}`;
+    if(kpiPrev[k.id]!==undefined&&kpiPrev[k.id]!==String(k.v)&&k.id!=='gasto'){c.classList.add('flash');setTimeout(()=>c.classList.remove('flash'),700)}kpiPrev[k.id]=String(k.v)});
+}
+
+/* ================= feed / listas ================= */
+function feedHTML(n,small){return FEED.slice(0,n).map(f=>small?`<li><i style="background:${f.cor}"></i><time>${hhmm(f.t)}</time><span>${f.txt}</span></li>`:`<li><time>${hhmm(f.t)}</time><i style="background:${f.cor}"></i><span>${f.txt}</span></li>`).join('')}
+function renderFeeds(){
+  if(!feedDirty)return;feedDirty=false;
+  $('feed').innerHTML=feedHTML(18);$('hudFeed').innerHTML=feedHTML(3,1);
+  if(FEED[0]){const t=$('ticker');t.innerHTML=`<time>${hhmm(FEED[0].t)}</time>${FEED[0].txt}`;t.style.animation='none';void t.offsetWidth;t.style.animation=''}
+  if(TV.on){$('tvFeed').innerHTML=feedHTML(14);$('tvHudFeed').innerHTML=feedHTML(3,1)}
+}
+function countsHTML(){const c={exec:0,peca:0,prev:0,lib:0};VEH.forEach(v=>{if(v.state!=='gone')c[v.status]++});return Object.keys(STATUS).map(k=>`<div style="border-color:var(${STATUS[k].v})" data-tip="${STATUS[k].nome}|${c[k]} máquinas"><b>${c[k]}</b><span>${STATUS[k].nome.replace('Aguardando','Aguard.')}</span></div>`).join('')}
+let selected=null;
+function renderPatioList(){
+  $('hudCounts').innerHTML=countsHTML();if(TV.on)$('tvCounts').innerHTML=countsHTML();
+  const ord={peca:0,exec:1,prev:2,lib:3};
+  const rows=VEH.filter(v=>v.state!=='gone').sort((a,b)=>ord[a.status]-ord[b.status]||vHoras(b)-vHoras(a));
+  $('tPatio').innerHTML=`<table class="vtab"><thead><tr><th>Frota</th><th>Equipamento</th><th>Oficina</th><th>Status</th><th>Sistema</th><th class="r">Parado</th><th>Previsão</th></tr></thead><tbody>${rows.map(v=>`<tr data-f="${v.frota}" class="${selected===v?'on':''}"><td>${v.frota}</td><td>${TM[v.tipo].sing}</td><td>${OFM[v.of].curto}</td><td><span class="stat" style="background:var(${STATUS[v.status].v})">${STATUS[v.status].nome}</span></td><td>${v.sistema}</td><td class="r">${nf(vHoras(v),1)} h</td><td>${v.state==='arriving'?'chegando…':v.state==='leaving'?'saindo…':v.prev}</td></tr>`).join('')}</tbody></table>`;
+  $('tPatio').querySelectorAll('tr[data-f]').forEach(tr=>tr.onclick=()=>selectV(VEH.find(v=>v.frota===tr.dataset.f),true));
+  renderDet();
+}
+function renderDet(){
+  const v=selected,el=$('hudDet');
+  if(!v||v.state==='gone'){el.hidden=true;return}
+  const s=STATUS[v.status],o=OFM[v.of];el.hidden=false;
+  el.innerHTML=`<button class="xbtn" aria-label="Fechar" id="detX">×</button><div class="fr">${v.frota}</div><div class="mo">${v.modelo} · ${TM[v.tipo].sing}</div><span class="stat" style="background:var(${s.v})">● ${s.nome}</span>
+  <dl class="kv"><dt>OS</dt><dd>${v.os}</dd><dt>Oficina</dt><dd>${o.nome}</dd><dt>Coordenador</dt><dd>${o.coord}</dd><dt>Sistema</dt><dd>${v.sistema}</dd><dt>Equipe</dt><dd>${v.mec}</dd><dt>Parado há</dt><dd>${nf(vHoras(v),1)} h</dd><dt>Peças</dt><dd>${brl(v.pecas)}</dd><dt>Previsão</dt><dd>${v.prev}</dd></dl>`;
+  $('detX').onclick=()=>selectV(null);
+}
+function selectV(v,focus){selected=v||null;listDirty=true;renderPatioList();if(window.P3D)P3D.select(selected,focus)}
+
+/* OS */
+const ST_ORDER=['Aguard. peça','Em execução','Em campo','Aberta','Aguard. liberação','Concluída'];
+const stPill={'Aguard. peça':'bad','Em execução':'warn','Em campo':'warn','Aberta':'warn','Aguard. liberação':'ok','Concluída':'ok'};
+function initOS(){
+  OF.forEach(o=>{$('fOf').insertAdjacentHTML('beforeend',`<option value="${o.id}">${o.nome}</option>`);$('fOf3d').insertAdjacentHTML('beforeend',`<option value="${o.id}">${o.nome}</option>`)});
+  ST_ORDER.forEach(s=>$('fSt').insertAdjacentHTML('beforeend',`<option>${s}</option>`));
+  ['Corretiva','Preventiva','Preditiva','Melhoria'].forEach(s=>$('fTp').insertAdjacentHTML('beforeend',`<option>${s}</option>`));
+  ['fOf','fSt','fTp','fQ'].forEach(id=>$(id).addEventListener('input',()=>{osDirty=true;renderOS()}));
+}
+function osHoras(o){return o.status==='Concluída'?o.abert:o.veh?vHoras(o.veh):Math.max(0,(SIM.t-o.t)/3.6e6)}
+function renderOS(){
+  if(!osDirty)return;osDirty=false;
+  const fo=$('fOf').value,fs=$('fSt').value,ft=$('fTp').value,q=$('fQ').value.trim().toLowerCase();
+  const rows=OS.filter(o=>(!fo||o.of===fo)&&(!fs||o.status===fs)&&(!ft||o.tipo===ft)&&(!q||(o.os+' '+o.frota+' '+o.sistema+' '+o.local+' '+TM[o.tipoF].nome).toLowerCase().includes(q))).sort((a,b)=>(b.status!=='Concluída')-(a.status!=='Concluída')||b.t-a.t||ST_ORDER.indexOf(a.status)-ST_ORDER.indexOf(b.status));
+  $('osCount').textContent=rows.length+' de '+OS.length+' OS · '+osAbertas()+' abertas';
+  $('tOS').innerHTML=`<table><thead><tr><th>OS</th><th>Aberta</th><th>Frota</th><th>Equipamento</th><th>Oficina</th><th>Tipo</th><th>Sistema</th><th>Local</th><th>Status</th><th class="r">Parado</th><th class="r">HH</th><th class="r">Peças</th></tr></thead><tbody>${rows.slice(0,120).map(o=>`<tr class="${o.t&&SIM.t-o.t<SIM.speed*4000?'new':''}"><td>${o.os}</td><td>${o.t?hhmm(o.t):'–'}</td><td><b>${o.frota}</b></td><td>${TM[o.tipoF].sing}</td><td>${OFM[o.of].curto}</td><td>${o.tipo}</td><td>${o.sistema}</td><td>${o.local}</td><td><span class="pill p-${stPill[o.status]}">${o.status}</span></td><td class="r">${nf(osHoras(o),0)} h</td><td class="r">${o.hh}</td><td class="r">${brl(o.pecas)}</td></tr>`).join('')||'<tr><td colspan="12" style="color:var(--muted)">Nenhuma OS com esses filtros.</td></tr>'}</tbody></table>`;
+}
+
+/* ================= navegação ================= */
+const IC={
+ gerencial:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+ patio:'<path d="M3 21V9l9-6 9 6v12"/><path d="M7 21v-7h10v7"/><path d="M7 17h10"/>',
+ colhedora:'<circle cx="7" cy="17" r="3"/><circle cx="17" cy="17" r="3"/><path d="M4 14V8h7l3 6M14 8h4l3 6"/><path d="M11 8V4"/>',
+ oficinas:'<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/>',
+ pessoas:'<path d="M4 15a8 8 0 0 1 16 0"/><path d="M2 15h20v3H2z"/><path d="M12 7V3"/>',
+ analise:'<path d="M3 20h18"/><rect x="4" y="8" width="3" height="12"/><rect x="10" y="12" width="3" height="8"/><rect x="16" y="15" width="3" height="5"/><path d="M4 6l6 2 6 3 5 1"/>',
+ frota:'<path d="M2 16V7h11v9"/><path d="M13 10h4l3 3v3h-7"/><circle cx="6" cy="17.5" r="2"/><circle cx="16.5" cy="17.5" r="2"/>',
+ os:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/>'
+};
+const VIEWS=[
+ {id:'gerencial',sh:'Gerência',l:'Visão Gerencial',s:'Custo, orçamento e alertas para a gerência'},
+ {id:'patio',sh:'Pátio',l:'Pátio 3D',s:'Oficina central ao vivo · clique nas máquinas'},
+ {id:'colhedora',sh:'Colhedora',l:'Colhedora 3D',s:'Onde a colhedora gasta e quebra, componente por componente'},
+ {id:'oficinas',sh:'Oficinas',l:'Oficinas & Equipes',s:'Coordenadores, turnos, carteira de serviço'},
+ {id:'pessoas',sh:'Segurança',l:'Pessoas & Segurança',s:'Dias sem acidente, absenteísmo, NRs e ocorrências'},
+ {id:'analise',sh:'Pareto',l:'Pareto & Curva ABC',s:'Onde estão as horas paradas e o dinheiro das peças'},
+ {id:'frota',sh:'Frota',l:'Frota',s:'DM, MTBF, MTTR e custo por tipo de equipamento'},
+ {id:'os',l:'Ordens de Serviço',s:'Todas as OS da manutenção, atualizando ao vivo'}
+];
+let VIEW='gerencial';
+$('nav').innerHTML=VIEWS.map(v=>`<button data-v="${v.id}"><svg viewBox="0 0 24 24">${IC[v.id]}</svg><span class="ll">${v.l}</span><span class="ls">${v.sh}</span>${v.id==='os'?'<span class="bd" id="bdOS"></span>':v.id==='patio'?'<span class="bd" id="bdPatio"></span>':''}</button>`).join('');
+$('nav').querySelectorAll('button').forEach(b=>b.onclick=()=>{try{history.replaceState(null,'','#'+b.dataset.v)}catch(e){}showView(b.dataset.v)});
+function showView(id){
+  if(!VIEWS.some(v=>v.id===id))id='gerencial';VIEW=id;const v=VIEWS.find(x=>x.id===id);
+  $('vTitle').textContent=v.l;$('vSub').textContent=v.s;
+  $('nav').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.v===id));
+  document.querySelectorAll('section[data-view]').forEach(s=>s.hidden=s.dataset.view!==id);
+  if(id==='os'){osDirty=true;renderOS()}
+  if(id==='oficinas')renderOficinas($('ofgrid'));
+  if(id==='pessoas')renderPessoas();
+  if(id==='patio'){listDirty=true;renderPatioList()}
+  if(id==='frota')renderFrota();
+  if(id==='gerencial')renderAlerts();
+  tt.hidden=true;scrollTo(0,0);
+}
+addEventListener('hashchange',()=>showView(location.hash.slice(1)));
+
+/* controles da simulação */
+function setSpeed(s){SIM.speed=s;document.querySelectorAll('.simctl [data-sp]').forEach(b=>b.classList.toggle('on',+b.dataset.sp===s))}
+document.querySelectorAll('.simctl [data-sp]').forEach(b=>b.onclick=()=>setSpeed(+b.dataset.sp));
+$('bPlay').onclick=()=>{SIM.playing=!SIM.playing;$('bPlay').textContent=SIM.playing?'❚❚':'▶';$('bPlay').title=SIM.playing?'Pausar a simulação':'Continuar a simulação';$('simChip').classList.toggle('paused',!SIM.playing)};
+$('themeBtn').onclick=()=>{const d=document.documentElement.classList.toggle('dark');$('themeBtn').textContent=d?'Tema claro':'Tema escuro';try{localStorage.setItem('torque-theme',d?'dark':'light')}catch(e){}if(window.P3D)P3D.theme()};
+try{if(localStorage.getItem('torque-theme')==='dark'){document.documentElement.classList.add('dark');$('themeBtn').textContent='Tema claro'}}catch(e){}
+
+/* atualização periódica da interface */
+function refreshLive(){
+  const d=new Date(SIM.t);
+  $('clock').textContent=hhmm(SIM.t);$('clockD').textContent=d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'});
+  $('turnoNow').textContent=TURNOS[TI].k+' · '+TURNOS[TI].txt;$('naArea').textContent=OF.reduce((a,o)=>a+o.t[TI],0);
+  $('dsaChip').textContent=SAFE.dsaCA;
+  $('bdOS').textContent=osAbertas();$('bdPatio').textContent=VEH.filter(v=>v.state!=='gone').length;
+  renderKPIs();renderFeeds();
+  if(VIEW==='patio'||listDirty){renderPatioList();listDirty=false}
+  if(VIEW==='os')renderOS();
+  if(ofDirty||(VIEW==='oficinas'&&osDirty)){calcOF();if(VIEW==='oficinas')renderOficinas($('ofgrid'));ofDirty=false}
+  if(safeDirty&&VIEW==='pessoas'){chartBird($('cBird'));$('dsa').innerHTML=dsaHTML();safeDirty=false}
+  if(TV.on)tvRefresh();
+}
+
+/* ================= modo TV ================= */
+const TV={on:false,i:0,t0:0,dur:15000,paused:false,slides:['Visão geral','Pátio ao vivo','Colhedora: onde gasta','Segurança','Oficinas e turnos']};
+$('tvDots').innerHTML=TV.slides.map(()=>'<i></i>').join('');
+function tvShow(i){
+  TV.i=(i+TV.slides.length)%TV.slides.length;TV.t0=performance.now();
+  document.querySelectorAll('.tvs').forEach(s=>s.hidden=+s.dataset.s!==TV.i);
+  $('tvTitle').textContent=TV.slides[TV.i];[...$('tvDots').children].forEach((d,k)=>d.classList.toggle('on',k===TV.i));
+  if(TV.i===1&&window.P3D){P3D.mount($('tvPatio'));P3D.cinema(true)}
+  if(TV.i===2&&window.C3D){C3D.mount($('tvColh'));C3D.tvMode(true)}
+  if(TV.i===0)chartOfCusto($('tvCusto'),760,56);
+  if(TV.i===3){$('tvSafe').innerHTML=dsaHTML();chartAbs($('tvAbs'),620)}
+  if(TV.i===4)renderOficinas($('tvOf'),true);
+  if(TV.i===2&&window.C3D)C3D.list($('tvComp'),true);
+  tvRefresh();feedDirty=true;renderFeeds();
+}
+function tvRefresh(){
+  $('tvClock').textContent=hhmm(SIM.t);$('tvTurno').textContent=TURNOS[TI].k;$('tvDsa').textContent=SAFE.dsaCA;
+  if(TV.i===0){const L=kpiList().filter(k=>['disp','os','dm','gasto'].includes(k.id));$('tvK').innerHTML=L.map(k=>`<div class="kpi"><span class="l">${k.l}</span><span class="v">${k.v}<small>${k.u}</small></span><span class="m">${k.m}</span>${spark(k.sp,k.c)}</div>`).join('')}
+  if(TV.i===1)$('tvCounts').innerHTML=countsHTML();
+}
+function tvOpen(){TV.on=true;$('tv').hidden=false;document.body.style.overflow='hidden';try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}tvShow(0)}
+function tvClose(){TV.on=false;$('tv').hidden=true;document.body.style.overflow='';try{document.fullscreenElement&&document.exitFullscreen()}catch(e){}
+  if(window.P3D){P3D.mount($('patioHost'));P3D.cinema($('bCine').getAttribute('aria-pressed')==='true')}if(window.C3D){C3D.mount($('colhHost'));C3D.tvMode(false)}}
+$('tvOpen').onclick=tvOpen;$('tvOpen2').onclick=tvOpen;$('tvClose').onclick=tvClose;$('tvNext').onclick=()=>tvShow(TV.i+1);$('tvPrev').onclick=()=>tvShow(TV.i-1);
+$('tvPause').onclick=()=>{TV.paused=!TV.paused;$('tvPause').textContent=TV.paused?'▶':'❚❚';if(TV.paused)TV.pk=(performance.now()-TV.t0)/TV.dur;else TV.t0=performance.now()-TV.pk*TV.dur};
+addEventListener('keydown',e=>{if(!TV.on)return;if(e.key==='Escape')tvClose();if(e.key==='ArrowRight')tvShow(TV.i+1);if(e.key==='ArrowLeft')tvShow(TV.i-1)});
+
+/* ================= laço principal ================= */
+let lastTs=performance.now(),acc=0;
+function mainLoop(ts){
+  const dt=Math.min(.25,(ts-lastTs)/1000);lastTs=ts;stepSim(dt);
+  acc+=dt;if(acc>.5){acc=0;refreshLive()}
+  if(TV.on&&!TV.paused){const k=(ts-TV.t0)/TV.dur;$('tvProg').style.width=Math.min(100,k*100)+'%';if(k>=1)tvShow(TV.i+1)}
+  requestAnimationFrame(mainLoop);
+}
+
+/* ================= inicialização ================= */
+initOS();renderExec();renderAlerts();chartDM($('cDM'));chartTrend($('cTrend'));chartTipo($('cTipo'));
+renderOficinas($('ofgrid'));chartHead($('cHead'));chartBacklog($('cBacklog'));renderPessoas();chartPareto($('cPareto'));chartABC($('cABC'));renderFrota();
+feed('Simulação iniciada: '+VEH.length+' máquinas no pátio e '+osAbertas()+' OS abertas','var(--fg)');
+showView(location.hash.slice(1)||'gerencial');refreshLive();requestAnimationFrame(mainLoop);
+
+/* ================= 3D compartilhado ================= */
+const HAS3D=!!(window.THREE&&THREE.OrbitControls);
+const M3=(c,o={})=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.7,metalness:.15},o));
+function bx(w,h,d,m,x=0,y=0,z=0){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;return o}
+function cy(rt,rb,h,m,seg=20){const o=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,seg),m);o.castShadow=true;return o}
+function canvasTex(draw,w,h){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.anisotropy=8;return t}
+function fitFont(x,txt,max,size,weight){let s=size;do{x.font=`${weight||700} ${s}px "Barlow Condensed","Arial Narrow",Arial,sans-serif`;s-=3}while(x.measureText(txt).width>max&&s>14)}
+function rr(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath()}
+function pillSprite(txt,border,scale){
+  const t=canvasTex((x,w,h)=>{x.fillStyle='rgba(20,25,28,.9)';x.strokeStyle=border||'#F2B705';x.lineWidth=6;rr(x,6,8,w-12,h-16,16);x.fill();x.stroke();fitFont(x,txt,w-30,58);x.fillStyle='#fff';x.textAlign='center';x.textBaseline='middle';x.fillText(txt,w/2,h/2+2)},txt.length>6?384:256,96);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,depthTest:false,transparent:true}));const k=scale||1;s.scale.set((txt.length>6?4.8:3.2)*k,1.2*k,1);s.renderOrder=10;return s}
+function floorText(txt,color,w,h){const t=canvasTex((x,W,H)=>{fitFont(x,txt,W-40,92,800);x.fillStyle=color;x.textAlign='center';x.textBaseline='middle';x.fillText(txt,W/2,H/2)},1024,128);
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false}));m.rotation.x=-Math.PI/2;return m}
+const ROAD=[];
+function makeRenderer(){const r=new THREE.WebGLRenderer({antialias:true});r.setPixelRatio(Math.min(devicePixelRatio,2));r.shadowMap.enabled=true;r.shadowMap.type=THREE.PCFSoftShadowMap;return r}
+const visible=el=>el&&el.offsetParent!==null&&el.clientWidth>0;
+
+/* ================= modelos de máquinas ================= */
+const MOD=(()=>{
+  const tireM=()=>M3(0x1b1e20,{roughness:.95,metalness:0}),rimM=()=>M3(0xb8c0c4,{metalness:.6,roughness:.35}),glassM=()=>M3(0x9ed4f5,{metalness:.2,roughness:.08,transparent:true,opacity:.6}),darkM=()=>M3(0x2a2f33),lightM=()=>new THREE.MeshBasicMaterial({color:0xfff6d0});
+  function wheel(r,w){const g=new THREE.Group(),t=cy(r,r,w,tireM(),24);t.rotation.z=Math.PI/2;g.add(t);const h=cy(r*.55,r*.55,w+.05,rimM(),16);h.rotation.z=Math.PI/2;g.add(h);return g}
+  function pair(g,r,w,x,z){[-1,1].forEach(s=>{const k=wheel(r,w);k.position.set(s*x,r,z);g.add(k)})}
+  function lights(g,x,y,z){[-1,1].forEach(s=>{const l=bx(.3,.18,.06,lightM(),s*x,y,z);l.castShadow=false;g.add(l)})}
+  const BODY={colh:[0x3E8E3A,0xB8312B],trat:[0x3E8E3A,0xB8312B,0x2F6DB5],cam:[0xF2F2F2,0x2F6DB5,0x9B1C1C,0xE0A100],apoio:[0xF0F0F0],leve:[0xF5F5F5,0x8F979C,0x2B2F33,0xB8312B],comb:[0xF0F0F0]};
+  function colh(c){const g=new THREE.Group(),b=M3(c),y=M3(0xF2C200),d=darkM();
+    [-1,1].forEach(s=>{g.add(bx(.85,1.25,5.2,tireM(),s*1.6,.62,0));for(let k=-2;k<=2;k++){const rl=cy(.28,.28,.9,d,12);rl.rotation.z=Math.PI/2;rl.position.set(s*1.6,.35,k*1.05);g.add(rl)}});
+    g.add(bx(2.5,2.3,5,b,0,2.35,-.3));g.add(bx(2.2,.25,5.2,d,0,1.15,-.2));
+    g.add(bx(2.2,1.9,1.9,b,0,4.2,1.7));g.add(bx(2.25,1.35,1.5,glassM(),0,4.3,2.25));g.add(bx(2.35,.12,2.1,b,0,5.2,1.7));
+    lights(g,.8,5.05,2.75);
+    g.add(bx(3.2,.7,1.3,d,0,.75,3.35));
+    [-1,1].forEach(s=>{const dv=cy(.08,.45,1.8,y,12);dv.rotation.x=Math.PI/2.4;dv.position.set(s*1.35,1.15,3.9);g.add(dv)});
+    const el=new THREE.Group();el.add(bx(.9,.85,5.4,b,0,0,0));for(let k=-2;k<=2;k++)el.add(bx(.95,.08,.12,d,0,.45,k));el.position.set(.6,4.3,-4.6);el.rotation.x=.48;g.add(el);
+    const hd=cy(.5,.5,.8,b,16);hd.position.set(.6,6.1,-7);g.add(hd);
+    const ex=cy(.5,.5,1,b,16);ex.position.set(0,4.2,-1.2);g.add(ex);g.add(bx(.25,.9,.25,d,-.9,4.1,-2.2));
+    return {g,h:6.8}}
+  function trat(c){const g=new THREE.Group(),b=M3(c),d=darkM();
+    g.add(bx(1.3,1.15,2.9,b,0,1.7,.8));g.add(bx(1.1,.5,.2,d,0,1.6,2.3));lights(g,.4,1.95,2.3);
+    g.add(bx(1.9,.2,1.9,d,0,2,-.9));
+    [[-.9,-.9],[.9,-.9],[-.9,.0],[.9,.0]].forEach(([x,z])=>g.add(bx(.1,1.9,.1,d,x,3,z-.9+.9*0)));
+    g.add(bx(1.85,1.5,1.85,glassM(),0,3.05,-.9));g.add(bx(2.1,.16,2.1,b,0,3.9,-.9));lights(g,.6,3.85,.15);
+    [-1,1].forEach(s=>{const k=wheel(1.08,.75);k.position.set(s*1.28,1.08,-1);g.add(k);const f=wheel(.62,.5);f.position.set(s*1.05,.62,1.85);g.add(f);g.add(bx(.85,.12,1.6,b,s*1.28,2.2,-1))});
+    const ex=cy(.09,.09,1.5,d);ex.position.set(.45,3.1,1.6);g.add(ex);return {g,h:4.1}}
+  function cam(c,apoio){const g=new THREE.Group(),b=M3(c),d=darkM();
+    g.add(bx(2.2,.45,9.6,d,0,1.05,-.6));
+    g.add(bx(2.5,2.7,2.2,b,0,2.65,3.6));g.add(bx(2.3,1.05,.08,glassM(),0,3.4,4.72));g.add(bx(2.52,.6,.1,d,0,1.7,4.72));lights(g,.9,1.7,4.78);
+    [-1,1].forEach(s=>{const tk=cy(.35,.35,1.2,rimM(),14);tk.rotation.x=Math.PI/2;tk.position.set(s*1.2,1.3,1.6);g.add(tk)});
+    if(apoio){const tk=cy(1.15,1.15,5.8,M3(0x2F7FD8,{metalness:.5,roughness:.3}),24);tk.rotation.x=Math.PI/2;tk.position.set(0,2.5,-2.2);g.add(tk)}
+    else{g.add(bx(2.5,2.2,6.2,M3(0x6f6252),0,2.45,-2.1));g.add(bx(2.4,.25,6,M3(0x5f8a3a),0,3.6,-2.1));for(let k=-4.6;k<0;k+=1.2)g.add(bx(2.55,2.2,.08,d,0,2.45,k))}
+    pair(g,.55,.5,1.05,3.5);pair(g,.55,.5,1.05,-2.6);pair(g,.55,.5,1.05,-3.9);return {g,h:3.9}}
+  function comb(){const g=new THREE.Group(),b=M3(0xF0F0F0),d=darkM();
+    g.add(bx(2.2,.45,8,d,0,1.05,-.3));g.add(bx(2.4,2.5,2,b,0,2.55,3));g.add(bx(2.2,.95,.08,glassM(),0,3.15,4.02));lights(g,.85,1.65,4.05);
+    const tk=cy(1,1,3.4,M3(0xF2B705,{metalness:.35,roughness:.4}),22);tk.rotation.x=Math.PI/2;tk.position.set(0,2.35,-.2);g.add(tk);
+    g.add(bx(2.4,2,2.3,M3(0xC9CED1),0,2.3,-3));const rl=cy(.4,.4,.3,M3(0xD93F3F),14);rl.rotation.z=Math.PI/2;rl.position.set(1.3,2.3,-3);g.add(rl);
+    pair(g,.52,.45,1.05,2.9);pair(g,.52,.45,1.05,-2.7);return {g,h:3.7}}
+  function leve(c){const g=new THREE.Group(),b=M3(c,{metalness:.45,roughness:.35});
+    g.add(bx(1.9,.75,5,b,0,.95,0));g.add(bx(1.82,.85,2.3,b,0,1.75,.25));g.add(bx(1.85,.6,2.1,glassM(),0,1.82,.3));g.add(bx(1.7,.08,1.9,darkM(),0,1.35,-1.5));lights(g,.65,1.05,2.52);
+    pair(g,.42,.3,.88,1.6);pair(g,.42,.3,.88,-1.6);return {g,h:2.3}}
+  function mech(){const g=new THREE.Group(),o=M3(0xEF7A1A),pants=M3(0x2d3a55);
+    const body=cy(.3,.32,1.05,o,10);body.position.y=1.1;g.add(body);
+    const l1=bx(.2,.65,.22,pants,-.12,.33,0),l2=bx(.2,.65,.22,pants,.12,.33,0);g.add(l1,l2);
+    const hd=new THREE.Mesh(new THREE.SphereGeometry(.23,12,10),M3(0xd9a87e));hd.position.y=1.85;g.add(hd);
+    const hat=new THREE.Mesh(new THREE.SphereGeometry(.27,12,8,0,Math.PI*2,0,Math.PI/2),M3(0xF2C200));hat.position.y=1.9;g.add(hat);
+    g.traverse(m=>m.castShadow=true);g.userData.legs=[l1,l2];return g}
+  return {BODY,colh,trat,cam:c=>cam(c,false),apoio:c=>cam(c,true),comb:()=>comb(),leve,mech};
+})();
+
+/* ================= pátio 3D ================= */
+function buildPatio(){
+  let host=$('patioHost');host.innerHTML='';
+  const renderer=makeRenderer();host.appendChild(renderer.domElement);
+  const scene=new THREE.Scene(),DAY={bg:0xC7D3D9,fog:0xC7D3D9},NIGHT={bg:0x0C141A,fog:0x0C141A};
+  scene.background=new THREE.Color(DAY.bg);scene.fog=new THREE.Fog(DAY.fog,140,300);
+  const camera=new THREE.PerspectiveCamera(40,1,.5,700);
+  const HOME={p:new THREE.Vector3(-42,44,66),t:new THREE.Vector3(0,0,4)};camera.position.copy(HOME.p);
+  const controls=new THREE.OrbitControls(camera,renderer.domElement);controls.target.copy(HOME.t);controls.enableDamping=true;controls.dampingFactor=.08;controls.maxPolarAngle=1.42;controls.minDistance=12;controls.maxDistance=190;
+  const hemi=new THREE.HemisphereLight(0xeef4ff,0x5a6266,.75);scene.add(hemi);
+  const sun=new THREE.DirectionalLight(0xfff2dc,1.05);sun.position.set(50,90,45);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-85,right:85,top:75,bottom:-75,near:10,far:260});sun.shadow.bias=-.0004;scene.add(sun);
+
+  /* piso */
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(340,260),M3(0x8B9498,{roughness:.98,metalness:0}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+  const yard=new THREE.Mesh(new THREE.PlaneGeometry(150,40),M3(0x5E666B,{roughness:.95,metalness:0}));yard.rotation.x=-Math.PI/2;yard.position.set(0,.01,44);yard.receiveShadow=true;scene.add(yard);
+  for(let x=-70;x<75;x+=8){const d=new THREE.Mesh(new THREE.PlaneGeometry(4,.35),new THREE.MeshBasicMaterial({color:0xf5f5f5}));d.rotation.x=-Math.PI/2;d.position.set(x,.03,44);scene.add(d)}
+  const slab=new THREE.Mesh(new THREE.PlaneGeometry(104,46),M3(0xAEB8B3,{roughness:.55,metalness:.05}));slab.rotation.x=-Math.PI/2;slab.position.set(0,.02,0);slab.receiveShadow=true;scene.add(slab);
+  const BW=8,ROWZ=[-12,10],X0=-44,slotX=s=>X0+s*BW;
+  const yel=new THREE.MeshBasicMaterial({color:0xF2B705});
+  const stripe=(x,z,w,d)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),yel);m.rotation.x=-Math.PI/2;m.position.set(x,.04,z);scene.add(m)};
+  const zones={};
+  BAYS.forEach(b=>{const n=b.tipos.length,cx=slotX(b.start)+(n-1)*BW/2,cz=ROWZ[b.row];
+    const z=new THREE.Mesh(new THREE.PlaneGeometry(n*BW-.4,13.6),new THREE.MeshBasicMaterial({color:new THREE.Color(OFM[b.of].cor),transparent:true,opacity:.16}));z.rotation.x=-Math.PI/2;z.position.set(cx,.03,cz);scene.add(z);zones[b.of]=z;
+    for(let i=0;i<=n;i++)stripe(slotX(b.start)-BW/2+i*BW,cz,.22,13.6);stripe(cx,cz-6.8,n*BW,.22);
+    const lb=floorText(OFM[b.of].nome.toUpperCase(),OFM[b.of].cor,n*BW-1,(n*BW-1)/8);lb.position.set(cx,.05,cz+(b.row===0?8.6:8.9));scene.add(lb)});
+  for(let x=-46;x<48;x+=2.6){const s=new THREE.Mesh(new THREE.PlaneGeometry(1.2,.6),yel);s.rotation.x=-Math.PI/2;s.position.set(x,.04,-1);scene.add(s)}
+
+  /* galpão */
+  const steel=M3(0x6B7880,{metalness:.55,roughness:.45}),shed=new THREE.Group();scene.add(shed);
+  for(let x=-48;x<=48;x+=16)[-21,21].forEach(z=>shed.add(bx(.7,10,.7,M3(0xF2B705,{metalness:.3}),x,5,z)));
+  const roofM=new THREE.MeshStandardMaterial({color:0xD9E2E6,transparent:true,opacity:.22,side:THREE.DoubleSide,depthWrite:false,roughness:.3,metalness:.3});
+  const sl=Math.hypot(21.5,4.5),an=Math.atan2(4.5,21.5);
+  [-1,1].forEach(s=>{const r=new THREE.Mesh(new THREE.BoxGeometry(100,.15,sl),roofM);r.position.set(0,12.25,s*10.75);r.rotation.x=s*an;shed.add(r);
+    const e=new THREE.LineSegments(new THREE.EdgesGeometry(r.geometry),new THREE.LineBasicMaterial({color:0x5a6870,transparent:true,opacity:.5}));e.position.copy(r.position);e.rotation.copy(r.rotation);shed.add(e)});
+  for(let x=-48;x<=48;x+=16){const t=bx(.35,.5,43,steel,x,10.2,0);t.castShadow=false;shed.add(t)}
+  const wall=bx(100,10,.4,M3(0x8796A0),0,5,-21.4);scene.add(wall);
+  const sign=new THREE.Mesh(new THREE.PlaneGeometry(44,5),new THREE.MeshBasicMaterial({map:canvasTex((x,w,h)=>{x.fillStyle='#14191C';x.fillRect(0,0,w,h);x.fillStyle='#F2B705';for(let i=-2;i<w/40+2;i++){x.beginPath();x.moveTo(i*40,h);x.lineTo(i*40+20,h);x.lineTo(i*40+30,h-14);x.lineTo(i*40+10,h-14);x.fill()}fitFont(x,'OFICINA CENTRAL · MANUTENÇÃO AUTOMOTIVA E AGRÍCOLA',w-60,64,800);x.textAlign='center';x.textBaseline='middle';x.fillText('OFICINA CENTRAL · MANUTENÇÃO AUTOMOTIVA E AGRÍCOLA',w/2,h/2-6)},1024,116)}));sign.position.set(0,7.6,-21.15);scene.add(sign);
+  /* refletores (noite) */
+  const lamps=[],lampMeshes=[];for(let x=-40;x<=40;x+=16)[-8,12].forEach(z=>{const p=new THREE.PointLight(0xffe2b0,0,42,1.6);p.position.set(x,9.2,z);scene.add(p);lamps.push(p);const lm=bx(2.2,.25,.8,new THREE.MeshBasicMaterial({color:0x666666}),x,9.6,z);lm.castShadow=false;scene.add(lm);lampMeshes.push(lm)});
+  /* ponte rolante */
+  const crane=new THREE.Group(),cyM=M3(0xF2B705,{metalness:.4,roughness:.4});crane.add(bx(1,1.1,42,cyM));const hoist=bx(1.6,1.2,1.6,M3(0x333a3f),0,-1,0);crane.add(hoist);
+  const cable=cy(.06,.06,1,M3(0x222222));cable.position.y=-1.6;crane.add(cable);const hook=new THREE.Group();hook.add(bx(.6,.5,.6,cyM));const eng=bx(1.6,1.2,1.9,M3(0x4a5358,{metalness:.5}),0,-1,0);hook.add(eng);hook.add(bx(.3,.3,2.1,M3(0x2a2f33),.9,-1,0));crane.add(hook);
+  crane.position.set(-40,9.4,-2);scene.add(crane);[-21,21].forEach(z=>scene.add(bx(36,.4,.5,steel,-30,9.95,z>0?20.6:-20.6)));
+  /* fila de entrada e tambores */
+  [[-34,52,0x2F6DB5],[-22,52,0xF2F2F2]].forEach(([x,z,c])=>{const t=MOD.cam(c);t.g.position.set(x,0,z);t.g.rotation.y=Math.PI;scene.add(t.g)});
+  const ql=floorText('FILA DE ENTRADA','#ffffff',24,3);ql.position.set(-28,.05,60);scene.add(ql);
+  for(let i=0;i<6;i++){const d=cy(.6,.6,1.3,M3([0x2F7FD8,0xD93F3F,0xF2B705][i%3],{metalness:.5}),16);d.position.set(46+(i%3)*1.4,.65,-17+Math.floor(i/3)*1.4);scene.add(d)}
+  /* trabalhadores andando */
+  const walkers=[];[[-1,-40,40,0],[19.5,-30,30,2],[-1,10,44,4],[19.5,-44,-10,1]].forEach(([z,a,b,ph])=>{const m=MOD.mech();m.position.set(a,0,z);scene.add(m);walkers.push({m,z,a,b,ph,dir:1})});
+  /* comboio da volante no pátio */
+  const mov=MOD.comb();scene.add(mov.g);const movS=pillSprite('5006','#1B9AA0');movS.position.y=5.2;mov.g.add(movS);
+  const loop=new THREE.CatmullRomCurve3([[-56,32],[0,30],[56,32],[64,44],[48,56],[0,56],[-48,56],[-64,44]].map(([x,z])=>new THREE.Vector3(x,0,z)),true);
+  const sent=[];
+  function dispatch(){const m=MOD.comb();m.g.position.set(60,0,30);scene.add(m.g);sent.push({g:m.g,t:0})}
+
+  /* ---------- máquinas ---------- */
+  const E=new Map(),pick=[];
+  function routeFor(v){const x=slotX(v.slot),z=ROWZ[v.row];return v.row===1?[new THREE.Vector3(x,0,66),new THREE.Vector3(x,0,z)]:[new THREE.Vector3(70,0,66),new THREE.Vector3(70,0,-1),new THREE.Vector3(x,0,-1),new THREE.Vector3(x,0,z)]}
+  function sparks(){const n=60,pos=new Float32Array(n*3),vel=[];for(let i=0;i<n;i++)vel.push([0,0,0,Math.random()]);const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    const p=new THREE.Points(g,new THREE.PointsMaterial({color:0xffc04d,size:.22,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));p.userData={vel,n};p.position.set(2.2,1.3,1.2);return p}
+  function add(v,anim){
+    const cols=MOD.BODY[v.tipo],m=MOD[v.tipo](cols[parseInt(v.frota)%cols.length]);
+    const grp=new THREE.Group(),body=new THREE.Group();body.add(m.g);grp.add(body);
+    const ring=new THREE.Mesh(new THREE.RingGeometry(3.3,3.9,56),new THREE.MeshBasicMaterial({transparent:true,opacity:.9,side:THREE.DoubleSide,depthWrite:false}));ring.rotation.x=-Math.PI/2;ring.position.y=.08;ring.scale.set(1,1.8,1);grp.add(ring);
+    const beacon=new THREE.Mesh(new THREE.SphereGeometry(.3,14,12),new THREE.MeshBasicMaterial());beacon.position.y=m.h+.45;grp.add(beacon);
+    const beam=new THREE.Mesh(new THREE.ConeGeometry(.9,4,16,1,true),new THREE.MeshBasicMaterial({transparent:true,opacity:.22,side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending}));beam.geometry.translate(0,-2,0);beam.rotation.z=Math.PI/2;
+    const bpiv=new THREE.Group();bpiv.position.copy(beacon.position);bpiv.add(beam);grp.add(bpiv);
+    const spr=pillSprite(v.frota,'#fff');spr.position.y=m.h+2;grp.add(spr);
+    const mechs=[MOD.mech(),MOD.mech()];mechs[0].position.set(2.7,0,1.2);mechs[0].rotation.y=-Math.PI/2;mechs[1].position.set(-2.6,0,-1.6);mechs[1].rotation.y=Math.PI/2;mechs.forEach(x=>grp.add(x));
+    const cones=new THREE.Group();[-2.9,2.9].forEach(x=>{const c=cy(.05,.38,.85,M3(0xEF7A1A),12);c.position.set(x,.43,-5.5);cones.add(c)});grp.add(cones);
+    const sp=sparks();grp.add(sp);
+    const e={v,grp,body,ring,beacon,bpiv,beam,spr,mechs,cones,sp,h:m.h,route:null,ri:0,leaving:false};
+    grp.traverse(o=>{if(o.isMesh)o.userData.v=v});
+    const r=routeFor(v);
+    if(anim){e.route=r;e.ri=1;grp.position.copy(r[0]);grp.lookAt(r[1])}else{grp.position.copy(r[r.length-1]);grp.rotation.y=Math.PI}
+    scene.add(grp);E.set(v,e);pick.push(grp);status(v);applyFilter();return e}
+  function status(v){const e=E.get(v);if(!e)return;const c=new THREE.Color(css(STATUS[v.status].v)||'#888');
+    e.ring.material.color.copy(c);e.beacon.material.color.copy(c);e.beam.material.color.copy(c);
+    const work=(v.status==='exec'||v.status==='prev')&&!e.route;e.mechs.forEach((m,i)=>m.visible=work&&(i===0||v.tipo==='colh'||v.tipo==='cam'));
+    e.cones.visible=v.status==='peca'&&!e.route;e.sp.visible=v.status==='exec'&&!e.route&&(v.of==='solda'||v.of==='pesada'||v.of==='colh');e.bpiv.visible=v.status!=='lib'}
+  function remove(v){const e=E.get(v);if(!e){finishLeave(v);return}const r=routeFor(v).reverse();e.route=r;e.ri=1;e.leaving=true;status(v);e.mechs.forEach(m=>m.visible=false);e.cones.visible=false;e.sp.visible=false}
+  function dispose(e){scene.remove(e.grp);e.grp.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(o.material.map)o.material.map.dispose();o.material.dispose()}});const i=pick.indexOf(e.grp);if(i>=0)pick.splice(i,1);E.delete(e.v)}
+
+  /* ---------- interação ---------- */
+  const ray=new THREE.Raycaster(),ptr=new THREE.Vector2();let down=null;
+  function hit(ev){const r=renderer.domElement.getBoundingClientRect();ptr.set((ev.clientX-r.left)/r.width*2-1,-(ev.clientY-r.top)/r.height*2+1);ray.setFromCamera(ptr,camera);const h=ray.intersectObjects(pick,true).find(x=>x.object.userData.v);return h?h.object.userData.v:null}
+  const cv=renderer.domElement;
+  cv.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY]});
+  cv.addEventListener('pointerup',e=>{if(down&&Math.hypot(e.clientX-down[0],e.clientY-down[1])<6&&!TV.on){selectV(hit(e),true)}down=null});
+  cv.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const v=hit(e);host.classList.toggle('hov',!!v);
+    if(v){tt.innerHTML=`<b>${v.frota} · ${TM[v.tipo].sing}</b><span>${STATUS[v.status].nome}</span><span>${v.sistema} · ${nf(vHoras(v),1)} h parada</span><span>${OFM[v.of].nome}</span>`;tt.hidden=false;placeTip(e.clientX,e.clientY)}else tt.hidden=true});
+  cv.addEventListener('pointerleave',()=>tt.hidden=true);
+  let fly=null,cine=false,night=false,filterOf='',labels=true;
+  const flyTo=(t,p)=>{fly={t0:performance.now(),fp:camera.position.clone(),ft:controls.target.clone(),tp:p,tt:t}};
+  function select(v,focus){E.forEach(e=>e.sel=e.v===v);if(v&&focus){const e=E.get(v);if(!e)return;const p=e.grp.position;cine=false;$('bCine').setAttribute('aria-pressed','false');flyTo(new THREE.Vector3(p.x,2,p.z),new THREE.Vector3(p.x-13,15,p.z+24))}}
+  function applyFilter(){E.forEach(e=>{const on=!filterOf||e.v.of===filterOf;e.grp.traverse(o=>{if(o.isMesh&&o.material&&o!==e.ring&&o!==e.beam){if(o.userData.op0===undefined){o.userData.op0=o.material.opacity;o.userData.tr0=o.material.transparent}o.material.transparent=on?o.userData.tr0:true;o.material.opacity=on?o.userData.op0:.12}});e.spr.visible=on&&labels});
+    Object.entries(zones).forEach(([k,z])=>z.material.opacity=!filterOf?.16:k===filterOf?.42:.05)}
+  $('fOf3d').addEventListener('input',e=>{filterOf=e.target.value;applyFilter();if(filterOf){const z=zones[filterOf].position;flyTo(new THREE.Vector3(z.x,1,z.z),new THREE.Vector3(z.x-12,30,z.z+42))}});
+  const tog=(id,fn)=>$(id).addEventListener('click',ev=>{const b=ev.currentTarget,on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',String(on));fn(on)});
+  tog('bRoof',on=>shed.visible=on);
+  tog('bLabels',on=>{labels=on;applyFilter();movS.visible=on});
+  tog('bCine',on=>{cine=on});
+  $('bTop').onclick=()=>{cine=false;$('bCine').setAttribute('aria-pressed','false');flyTo(new THREE.Vector3(0,0,8),new THREE.Vector3(0,125,16))};
+  $('bReset').onclick=()=>{cine=false;$('bCine').setAttribute('aria-pressed','false');flyTo(HOME.t.clone(),HOME.p.clone())};
+  function setNight(n){night=n;const s=n?NIGHT:DAY;scene.background.set(s.bg);scene.fog.color.set(s.fog);hemi.intensity=n?.22:.75;sun.intensity=n?.12:1.05;lamps.forEach(l=>l.intensity=n?1.15:0);lampMeshes.forEach(m=>m.material.color.set(n?0xfff3c8:0x666666));
+    E.forEach(e=>e.beam.material.opacity=n?.38:.22);$('dayseg').querySelectorAll('button').forEach(b=>b.classList.toggle('on',(b.dataset.m==='noite')===n))}
+  $('dayseg').querySelectorAll('button').forEach(b=>b.onclick=()=>setNight(b.dataset.m==='noite'));
+
+  VEH.forEach(v=>add(v,false));
+  function resize(){const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+  const ro=new ResizeObserver(en=>en.forEach(x=>{if(x.target===host)resize()}));ro.observe($('patioHost'));ro.observe($('tvPatio'));
+  function mount(el){if(cv.parentNode!==el){el.appendChild(cv);host=el;resize()}}
+  resize();
+
+  /* ---------- animação ---------- */
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches,clock=new THREE.Clock();let u=0,craneT=0;
+  function frame(){
+    const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;
+    if(!visible(host))return;
+    if(fly){const k=Math.min(1,(performance.now()-fly.t0)/900),q=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;camera.position.lerpVectors(fly.fp,fly.tp,q);controls.target.lerpVectors(fly.ft,fly.tt,q);if(k>=1)fly=null}
+    else if(cine||TV.on){const a=t*.07;camera.position.lerp(new THREE.Vector3(Math.cos(a)*88,40+Math.sin(t*.13)*10,Math.sin(a)*70+10),.02);controls.target.lerp(new THREE.Vector3(0,0,2),.03)}
+    const spd=reduce?0:1;
+    /* rotas */
+    E.forEach(e=>{
+      if(e.route){const tgt=e.route[e.ri],p=e.grp.position,d=tgt.clone().sub(p),L=d.length(),step=14*dt;
+        if(L<=step){p.copy(tgt);e.ri++;if(e.ri>=e.route.length){e.route=null;if(e.leaving){dispose(e);finishLeave(e.v);return}e.grp.rotation.set(0,Math.PI,0);e.v.state='parked';status(e.v);listDirty=true}else e.grp.lookAt(e.route[e.ri])}
+        else{p.add(d.multiplyScalar(step/L));e.grp.lookAt(tgt)}
+        e.body.position.y=Math.abs(Math.sin(t*14))*.04}
+      e.bpiv.rotation.y=t*4;
+      const sel=e.sel;e.ring.material.opacity=sel?.55+Math.sin(t*7)*.45:.85;e.ring.scale.set(sel?1.12:1,sel?1.95:1.8,1);e.beacon.scale.setScalar(1+Math.sin(t*6)*.15);
+      e.mechs.forEach((m,i)=>{if(m.visible){m.position.y=Math.abs(Math.sin(t*2+i))*.06;m.rotation.z=Math.sin(t*1.5+i)*.08}});
+      if(e.sp.visible&&spd){const pa=e.sp.geometry.attributes.position,a=pa.array,vel=e.sp.userData.vel,burst=Math.sin(t*3)>-.2;
+        for(let i=0;i<e.sp.userData.n;i++){const q=vel[i];q[3]-=dt;if(q[3]<=0){if(burst){a[i*3]=0;a[i*3+1]=0;a[i*3+2]=0;q[0]=(Math.random()-.5)*4;q[1]=Math.random()*3+1;q[2]=(Math.random()-.5)*4;q[3]=.4+Math.random()*.5}else{a[i*3+1]=-99}}else{q[1]-=9.8*dt;a[i*3]+=q[0]*dt;a[i*3+1]+=q[1]*dt;a[i*3+2]+=q[2]*dt;if(a[i*3+1]<-1.25){a[i*3+1]=-1.25;q[1]*=-.3}}}
+        pa.needsUpdate=true}
+    });
+    if(spd){
+      u=(u+dt*.02)%1;const p=loop.getPointAt(u),q=loop.getPointAt((u+.004)%1);mov.g.position.copy(p);mov.g.lookAt(q);
+      for(let i=sent.length-1;i>=0;i--){const s=sent[i];s.t+=dt;s.g.position.z=30+s.t*12;s.g.rotation.y=0;if(s.t>9){scene.remove(s.g);sent.splice(i,1)}}
+      craneT+=dt;const cx=-40+((Math.sin(craneT*.18)+1)/2)*24;crane.position.x=cx;const lift=(Math.sin(craneT*.5)+1)/2;hook.position.y=-2.4-lift*3.2;cable.scale.y=.8+lift*3.2;cable.position.y=-1.4-(.8+lift*3.2)/2;
+      walkers.forEach(w=>{w.m.position.x+=w.dir*dt*1.6;if(w.m.position.x>w.b){w.dir=-1}if(w.m.position.x<w.a){w.dir=1}w.m.rotation.y=w.dir>0?Math.PI/2:-Math.PI/2;const s=Math.sin(t*7+w.ph)*.5;w.m.userData.legs[0].rotation.x=s;w.m.userData.legs[1].rotation.x=-s});
+    }
+    controls.update();renderer.render(scene,camera);
+  }
+  window.P3D={add,remove,status,select,mount,resize,frame,dispatch,cinema:on=>{cine=on},theme:()=>{}};
+}
+
+/* ================= colhedora explodida ================= */
+function buildColh(){
+  let host=$('colhHost');host.innerHTML='';
+  const renderer=makeRenderer();host.appendChild(renderer.domElement);
+  const scene=new THREE.Scene();scene.background=new THREE.Color(0xDCE3E6);scene.fog=new THREE.Fog(0xDCE3E6,60,120);
+  const camera=new THREE.PerspectiveCamera(38,1,.1,300);camera.position.set(18,11.5,21);
+  const controls=new THREE.OrbitControls(camera,renderer.domElement);controls.target.set(0,2.6,-.6);controls.enableDamping=true;controls.autoRotate=true;controls.autoRotateSpeed=.8;controls.maxPolarAngle=1.5;controls.minDistance=10;controls.maxDistance=70;
+  scene.add(new THREE.HemisphereLight(0xffffff,0x7a868c,.85));
+  const sun=new THREE.DirectionalLight(0xffffff,.9);sun.position.set(12,24,14);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-20,right:20,top:20,bottom:-20});scene.add(sun);
+  const fl=new THREE.DirectionalLight(0xcfe3ff,.35);fl.position.set(-14,8,-10);scene.add(fl);
+  const plat=new THREE.Mesh(new THREE.CylinderGeometry(15,15.4,.5,64),M3(0xC5CED2,{roughness:.6}));plat.position.y=-.25;plat.receiveShadow=true;scene.add(plat);
+  const ringY=new THREE.Mesh(new THREE.RingGeometry(14.4,15,64),new THREE.MeshBasicMaterial({color:0xF2B705}));ringY.rotation.x=-Math.PI/2;ringY.position.y=.01;scene.add(ringY);
+  const grid=new THREE.GridHelper(28,28,0x9aa7ad,0xb2bdc2);grid.position.y=.02;scene.add(grid);
+
+  const NATC3={chassi:0x3E8E3A,esteira:0x2A2F33,motor:0x58636A,hidr:0x33393d,cab:0x3E8E3A,ac:0xE9ECEE,corte:0xF2C200,div:0xF2C200,rolos:0x7C878D,picador:0x4A545A,transm:0x6B767C,elev:0x3E8E3A,ext1:0x3E8E3A,ext2:0x3E8E3A,eletr:0xB8312B};
+  const mats={};COMP.forEach(c=>mats[c.id]=M3(NATC3[c.id],{metalness:.25,roughness:.55}));
+  const dark=M3(0x23282b),glass=M3(0x9ed4f5,{transparent:true,opacity:.55,roughness:.05});
+  const P=[];
+  function piece(c,vec,build,lab){const g=new THREE.Group();build(g,mats[c]);g.traverse(o=>{if(o.isMesh){o.userData.c=c;o.castShadow=true}});scene.add(g);const p={c,g,vec:new THREE.Vector3(...vec),lab:lab?new THREE.Vector3(...lab):null};P.push(p);return p}
+  piece('chassi',[0,0,0],(g,m)=>{g.add(bx(2.2,.5,8.4,m,0,1.75,-.6));[-1,1].forEach(s=>g.add(bx(.25,1.4,6.2,m,s*1.05,2.6,-1)))},[0,1,-4]);
+  [-1,1].forEach(s=>piece('esteira',[s*3.4,-.05,0],(g,m)=>{g.add(bx(.95,1.25,6.2,m,s*1.75,.72,.2));for(let k=-2;k<=2;k++){const r=cy(.32,.32,1.05,dark,14);r.rotation.z=Math.PI/2;r.position.set(s*1.75,.42,k*1.2+.2);g.add(r)}const sp=cy(.6,.6,1.1,dark,16);sp.rotation.z=Math.PI/2;sp.position.set(s*1.75,.9,-2.9);g.add(sp)},s>0?[1.8,1.8,3]:null));
+  piece('motor',[0,4.4,-1.4],(g,m)=>{g.add(bx(2,1.3,2.4,m,0,2.7,-2.7));g.add(bx(1.2,.5,1.7,dark,0,3.6,-2.7));for(let k=0;k<6;k++){const c=cy(.12,.12,.4,dark,8);c.position.set(-.4+(k%2)*.8,3.95,-3.3+Math.floor(k/2)*.6);g.add(c)}const ex=cy(.15,.15,1.2,dark,10);ex.position.set(.7,4.2,-3.6);g.add(ex)},[0,4.4,-2.7]);
+  piece('hidr',[4.8,1.3,0],(g,m)=>{const t=cy(.55,.55,1.6,m,20);t.position.set(1.4,2.7,-.4);g.add(t);[-1.7,-1.05].forEach(z=>{const p=cy(.27,.27,.7,mats.hidr,14);p.rotation.z=Math.PI/2;p.position.set(1.35,1.95,z);g.add(p)});
+    for(let k=0;k<4;k++){const h=cy(.07,.07,4.6,M3(0x111111),8);h.rotation.x=Math.PI/2;h.position.set(1.15+k*.08,1.7+k*.12,1.3);g.add(h)}},[1.4,3.8,-.4]);
+  piece('cab',[0,3.4,3.2],(g,m)=>{g.add(bx(2.1,.25,2.2,m,0,2.4,1.9));g.add(bx(2.15,1.85,.18,m,0,3.4,.85));[-1,1].forEach(s=>g.add(bx(.12,1.85,2.1,glass,s*1.03,3.4,1.9)));g.add(bx(2,1.5,.08,glass,0,3.45,2.93));g.add(bx(2.3,.15,2.4,m,0,4.35,1.9));g.add(bx(.7,.8,.6,dark,0,2.9,1.5))},[0,5,2]);
+  piece('ac',[0,6.4,3.6],(g,m)=>{g.add(bx(1.3,.35,1,m,0,4.62,1.7));const f=cy(.3,.3,.08,dark,16);f.position.set(0,4.82,1.7);g.add(f)},[0,5.4,1.7]);
+  piece('corte',[0,-.15,4.8],(g,m)=>{[-1,1].forEach(s=>{const d=cy(.82,.82,.14,m,24);d.position.set(s*.68,.32,4.4);g.add(d);for(let k=0;k<5;k++){const b=bx(.5,.05,.12,dark,s*.68+Math.cos(k*1.26)*.85,.3,4.4+Math.sin(k*1.26)*.85);b.rotation.y=-k*1.26;g.add(b)}});g.add(bx(1.9,.5,.6,dark,0,.75,4))},[0,1.4,4.4]);
+  [-1,1].forEach(s=>piece('div',[s*3,.4,4.4],(g,m)=>{const c=cy(.06,.48,2,m,14);c.rotation.x=Math.PI/2.3;c.position.set(s*1.4,1.15,4.6);g.add(c);for(let k=0;k<4;k++){const r=new THREE.Mesh(new THREE.TorusGeometry(.12+k*.09,.03,6,16),dark);r.position.set(s*1.4,1.35-k*.2,4.0+k*.4);r.rotation.x=.4;g.add(r)}},s>0?[1.4,2.4,4.6]:null));
+  piece('rolos',[0,1.7,3.8],(g,m)=>{[[3.4,1.15],[2.95,1.7],[2.5,1.2],[2.05,1.75]].forEach(([z,y])=>{const r=cy(.28,.28,1.7,m,16);r.rotation.z=Math.PI/2;r.position.set(0,y,z);g.add(r)})},[0,2.6,2.7]);
+  piece('picador',[-5.2,1.5,1.6],(g,m)=>{const d=cy(.55,.55,1.8,m,22);d.rotation.z=Math.PI/2;d.position.set(0,1.75,1);g.add(d);for(let k=0;k<6;k++){const b=bx(1.75,.08,.32,M3(0xd0d6d9,{metalness:.8,roughness:.2}),0,1.75+Math.sin(k*1.047)*.62,1+Math.cos(k*1.047)*.62);b.rotation.x=-k*1.047;g.add(b)}},[0,2.8,1]);
+  piece('transm',[0,-.1,-6],(g,m)=>{g.add(bx(1.3,.8,1.8,m,0,1.05,-1.4));const c=cy(.25,.25,2.6,dark,12);c.rotation.z=Math.PI/2;c.position.set(0,.9,-1.9);g.add(c)},[0,1.9,-1.4]);
+  piece('elev',[0,2.8,-4.4],(g,m)=>{const e=new THREE.Group();e.add(bx(1,.9,5.6,m));for(let k=-2.4;k<=2.4;k+=.6)e.add(bx(1.05,.07,.12,dark,0,.48,k));e.position.set(0,3.4,-5.4);e.rotation.x=.48;g.add(e)},[0,5,-5.8]);
+  piece('ext1',[0,5.6,-.4],(g,m)=>{const c=cy(.6,.6,1.2,m,20);c.position.set(0,4.05,-1);g.add(c);const h=cy(.78,.6,.3,m,20);h.position.set(0,4.75,-1);g.add(h);const s=bx(.6,.45,.9,m,0,4.6,-1.75);s.rotation.x=-.4;g.add(s)},[0,5.6,-1]);
+  piece('ext2',[0,4.2,-3.4],(g,m)=>{const c=cy(.45,.45,.75,m,18);c.position.set(0,5.3,-7.8);g.add(c);const h=bx(.7,.35,.9,m,0,5.8,-8.1);h.rotation.x=.4;g.add(h)},[0,6.4,-7.9]);
+  piece('eletr',[-4.8,2.6,-2],(g,m)=>{g.add(bx(.75,.5,.55,dark,-1.3,2.2,-2.9));g.add(bx(.2,.25,.2,m,-1.3,2.55,-2.75));for(let k=0;k<3;k++){const w=cy(.05,.05,5.8,m,6);w.rotation.x=Math.PI/2;w.position.set(-1.18,2.1+k*.12,-.1);g.add(w)}g.add(bx(.35,.45,.25,M3(0x14191C),-1.2,2.8,1.6))},[-1.3,3.4,-1]);
+
+  /* rótulos */
+  const LBL={};COMP.forEach(c=>{const p=P.find(x=>x.c===c.id&&x.lab);const s=pillSprite(c.n,"#F2B705",.6);scene.add(s);LBL[c.id]={s,p}});
+  let mode='custo',ex=.6,exT=0,labels=true,selC=null,hovC=null,tvm=false;
+  const maxOf=k=>Math.max(...COMP.map(c=>c[k]));
+  const heat=t=>{const a=new THREE.Color(0xA9B7BE),b=new THREE.Color(0xF2B705),c=new THREE.Color(0xD93F3F);return t<.5?a.lerp(b,t*2):b.clone().lerp(c,(t-.5)*2)};
+  function metric(c){return mode==='falhas'?c.fal:c.custo}
+  function recolor(){const mx=mode==='falhas'?maxOf('fal'):maxOf('custo');COMP.forEach(c=>{const m=mats[c.id];if(mode==='real')m.color.setHex(NATC3[c.id]);else m.color.copy(heat(Math.sqrt(metric(c)/mx)))});
+    $('heatLg').style.visibility=mode==='real'?'hidden':'visible';$('heatLg').lastElementChild.textContent=mode==='falhas'?'mais falhas':'maior custo';highlight()}
+  function highlight(){COMP.forEach(c=>{const m=mats[c.id],on=c.id===selC||c.id===hovC;m.emissive.setHex(on?0x5a4400:0x000000);m.emissiveIntensity=on?.9:0})}
+  function setSel(id,focus){selC=id;highlight();list($('compList'));detail();if(focus&&id){const l=LBL[id];if(l){const tgt=l.p.g.position.clone().add(l.p.lab);controls.target.lerp(tgt,.5)}}}
+  function detail(){const c=COMPM[selC]||COMP[0],tot=COMP.reduce((a,x)=>a+x.custo,0),mtbf=HOP_COLH/c.fal;
+    $('compDet').innerHTML=`<h3>${c.n}</h3><p>${c.obs}</p><dl class="kv"><dt>Custo na safra</dt><dd><b>${brl(c.custo*1000)}</b></dd><dt>% do custo da colhedora</dt><dd>${nf(c.custo/tot*100,1)}%</dd><dt>Falhas registradas</dt><dd>${c.fal}</dd><dt>MTBF do componente</dt><dd>${nf(mtbf,0)} h</dd><dt>Custo por máquina</dt><dd>${brl(c.custo*1000/32)}</dd><dt>Peças que mais saem</dt><dd style="white-space:normal">${c.pecas}</dd></dl>`}
+  function list(el,tv){const mx=mode==='falhas'?maxOf('fal'):maxOf('custo'),tot=COMP.reduce((a,x)=>a+metric(x),0);
+    el.innerHTML=[...COMP].sort((a,b)=>metric(b)-metric(a)).slice(0,tv?10:15).map((c,i)=>{const v=metric(c),col='#'+heat(Math.sqrt(v/mx)).getHexString();
+      return `<button data-c="${c.id}" class="${c.id===selC&&!tv?'on':''}" data-tip="${esc(`${c.n}|Custo na safra: ${brl(c.custo*1000)}|Falhas: ${c.fal}|MTBF: ${nf(HOP_COLH/c.fal,0)} h|${nf(v/tot*100,1)}% do ${mode==='falhas'?'total de falhas':'custo'}`)}"><span class="rk">${i+1}</span><span>${c.n}</span><span class="bw"><i style="width:${v/mx*100}%;background:${col}"></i></span><span class="vv">${mode==='falhas'?v:brl(v*1000).replace('R$ ','')}</span></button>`}).join('');
+    if(!tv)el.querySelectorAll('button').forEach(b=>{b.onclick=()=>setSel(b.dataset.c,true);b.onmouseenter=()=>{hovC=b.dataset.c;highlight()};b.onmouseleave=()=>{hovC=null;highlight()}})}
+  $('cmode').querySelectorAll('button').forEach(b=>b.onclick=()=>{mode=b.dataset.m;$('cmode').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));recolor();list($('compList'))});
+  $('explode').addEventListener('input',e=>{ex=e.target.value/100});
+  const tg=(id,fn)=>$(id).addEventListener('click',ev=>{const b=ev.currentTarget,on=b.getAttribute('aria-pressed')!=='true';b.setAttribute('aria-pressed',String(on));fn(on)});
+  tg('bCLabels',on=>labels=on);tg('bCRot',on=>controls.autoRotate=on);
+  const ray=new THREE.Raycaster(),ptr=new THREE.Vector2(),cv=renderer.domElement;let dn=null;
+  const meshes=[];P.forEach(p=>p.g.traverse(o=>{if(o.isMesh)meshes.push(o)}));
+  function hitC(e){const r=cv.getBoundingClientRect();ptr.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ptr,camera);const h=ray.intersectObjects(meshes,false)[0];return h?h.object.userData.c:null}
+  cv.addEventListener('pointerdown',e=>dn=[e.clientX,e.clientY]);
+  cv.addEventListener('pointerup',e=>{if(dn&&Math.hypot(e.clientX-dn[0],e.clientY-dn[1])<6&&!tvm){const c=hitC(e);setSel(c||null,false)}dn=null});
+  cv.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const c=hitC(e);if(c!==hovC){hovC=c;highlight()}host.classList.toggle('hov',!!c);
+    if(c){const k=COMPM[c];tt.innerHTML=`<b>${k.n}</b><span>Custo na safra: ${brl(k.custo*1000)}</span><span>Falhas: ${k.fal} · MTBF ${nf(HOP_COLH/k.fal,0)} h</span>`;tt.hidden=false;placeTip(e.clientX,e.clientY)}else tt.hidden=true});
+  cv.addEventListener('pointerleave',()=>{hovC=null;highlight();tt.hidden=true});
+  function resize(){const w=host.clientWidth,h=host.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+  const ro=new ResizeObserver(en=>en.forEach(x=>{if(x.target===host)resize()}));ro.observe($('colhHost'));ro.observe($('tvColh'));
+  function mount(el){if(cv.parentNode!==el){el.appendChild(cv);host=el;resize()}}
+  resize();recolor();list($('compList'));selC='picador';highlight();list($('compList'));detail();
+  const clock=new THREE.Clock();let cur=0,tvSel=0,tvT=0;
+  function frame(){const dt=Math.min(clock.getDelta(),.05),t=clock.elapsedTime;if(!visible(host))return;
+    let target=ex;if(tvm){target=.45+Math.sin(t*.35)*.35;tvT+=dt;if(tvT>3){tvT=0;tvSel=(tvSel+1)%5;selC=[...COMP].sort((a,b)=>b.custo-a.custo)[tvSel].id;highlight()}}
+    cur+=(target-cur)*Math.min(1,dt*4);
+    P.forEach(p=>p.g.position.copy(p.vec).multiplyScalar(cur));
+    COMP.forEach(c=>{const l=LBL[c.id];if(!l||!l.p)return;l.s.position.copy(l.p.g.position).add(l.p.lab).add(new THREE.Vector3(0,.9,0));l.s.visible=labels&&cur>.25;l.s.material.opacity=Math.min(1,(cur-.25)*4)*(selC&&selC!==c.id&&!tvm?.75:1)});
+    const pulse=(Math.sin(t*4)+1)/2;if(selC)mats[selC].emissiveIntensity=.5+pulse*.6;
+    controls.update();renderer.render(scene,camera)}
+  window.C3D={mount,resize,frame,list,tvMode:on=>{tvm=on;controls.autoRotate=on||$('bCRot').getAttribute('aria-pressed')==='true';if(!on){setSel(selC,false)}}};
+}
+
+if(HAS3D){
+  try{buildPatio()}catch(e){$('patioHost').innerHTML='<div class="load3d">Não foi possível iniciar o 3D: '+esc(e.message)+'</div>';window.P3D=null}
+  try{buildColh()}catch(e){$('colhHost').innerHTML='<div class="load3d">Não foi possível iniciar o 3D: '+esc(e.message)+'</div>';window.C3D=null}
+  (function r3(){requestAnimationFrame(r3);if(window.P3D)P3D.frame();if(window.C3D)C3D.frame()})();
+}else{['patioHost','colhHost'].forEach(id=>$(id).innerHTML='<div class="load3d">O 3D não carregou neste navegador.</div>')}
+})();
+</script>
+</body>
+</html>
